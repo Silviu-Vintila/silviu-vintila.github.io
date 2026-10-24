@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trust in the Numbers · Silviu Vintilă</title>
+<meta name="description" content="Case study: how every engine is kept honest: regression replay of recorded SQL inputs, rule audits on every output, stock checked against physical counts, ML backtests and cell-by-cell report comparisons.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+<div class="top"><div class="wrap"><a href="index.html">← Silviu Vintilă · Portfolio</a><span><a href="index.html#work">Case 06 of 06</a></span></div></div>
+<header class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Case study 06 · Trust in the numbers</span>
+    <h1>If a number can't be explained, it doesn't ship</h1>
+    <p class="lead">Engines that decide stock and money every day need more than correct code on the day they are written. This is the safety net built around all of them: tests that replay real days, audits that read every output, and comparisons with the physical world.</p>
+    <div class="facts">
+      <div><span>Applies to</span><b>All engines and reports</b></div>
+      <div><span>Runs</span><b>On every change · every day</b></div>
+      <div><span>Ground truth</span><b>Real sales · physical counts</b></div>
+      <div><span>Tools</span><b>Python · git · SQL</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">Five layers</span>
+    <h2>From "it runs" to "it's right"</h2>
+    <ol class="flow">
+      <li class="gate"><b>Input gates</b><span>Stop when data is stale, partial or from the wrong month, before anything is computed.</span></li>
+      <li><b>Regression replay</b><span>Real SQL answers recorded once per weekday and replayed offline after every code change.</span></li>
+      <li><b>Rule audit</b><span>A dozen business rules checked on each day's output before it is sent.</span></li>
+      <li><b>Reality checks</b><span>Rebuilt stock against system stock and physical counts; forecasts against what actually sold.</span></li>
+    </ol>
+    <ol class="flow" style="margin-top: 12px; counter-reset: f 4">
+      <li><b>Backtests</b><span>New models judged day by day with only the information available that morning.</span></li>
+      <li><b>Cell-by-cell diffs</b><span>Every report and dashboard regenerated before and after a change and compared cell by cell.</span></li>
+      <li><b>Decision log</b><span>Each rule change written down with the date, the reason and its measured effect.</span></li>
+      <li class="gate"><b>git</b><span>One commit per validated change, so any past result can be reproduced.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">Regression replay</span>
+      <h2>A photograph of each weekday</h2>
+      <p>Some rules only fire on certain days: Thursday covers the weekend, Friday covers Monday, some days allow no supplier surplus. So the harness keeps one snapshot per weekday: the SQL answers, the editable config and the frozen date.</p>
+      <div class="formula">record:  each query → hash(sql + params) → stored answer<br>replay:  same query → same answer → compare output row by row</div>
+      <p>The result is either OK or a list of what changed, with examples (store / product: before → now). An intended change is accepted explicitly, never silently.</p>
+    </div>
+    <div>
+      <span class="eyebrow">Rule audit</span>
+      <h2>Read the output like a reviewer would</h2>
+      <ul class="checks">
+        <li>Whole, non-negative units only.</li>
+        <li>Goods only to store × product pairs that are in the range.</li>
+        <li>Never more than the supplier has.</li>
+        <li>No surplus on the days it is not allowed.</li>
+        <li>Stores not open yet receive nothing they already have.</li>
+        <li>Stock + order never above what can be sold before expiry.</li>
+        <li>New-store caps and new-product rules applied as written.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">Against the real world</span>
+    <h2>Checks that use ground truth</h2>
+    <div class="dashes">
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">ML backtest · demand covered, week by week</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-ml" viewBox="0 0 520 210" role="img" aria-label="Share of demand covered by baseline and ML forecast per week"></svg>
+        <div class="legend"><span><i style="background: var(--line)"></i>Weekday baseline</span><span><i style="background: var(--leaf)"></i>ML forecast</span></div>
+        <p class="note">The new forecast had to win on fewer units shipped and more demand covered, in every week, before it was switched on, with automatic fallback when it is stale.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">On shelf or not · rebuilt stock vs physical counts</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-count" viewBox="0 0 520 210" role="img" aria-label="Agreement between rebuilt stock, system stock and physical counts"></svg>
+        <p class="note">Before availability was reported to anyone, the rebuilt shelf stock was compared with every physical stock count in the period.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">Bugs the net caught</span>
+    <h2>Each one would have shipped quietly</h2>
+    <div class="log">
+      <div><b>A random average</b><p>The replay showed a mean changing at the second decimal between identical runs: a set iterated in random order. Every list behind an average is now sorted.</p></div>
+      <div><b>A double-counted day</b><p>Comparing rebuilt stock with system stock exposed one day of sales subtracted twice in the inherited formula. The fix and the decision to keep or drop it were written down with their measured effect.</p></div>
+      <div><b>Inflated safety buffers</b><p>Buffers for multi-day covers summed standard deviations instead of variances, inflating them by up to 70%. Caught by reading the audit columns, fixed with a before/after test.</p></div>
+      <div><b>Surplus to the wrong stores</b><p>When most lines of a product were new, surplus went only to the two stable stores, which received hundreds of units each. The audit flagged it the same morning and the file was regenerated.</p></div>
+      <div><b>An export from the future</b><p>An HR export arrived with every store's window in the next month. A guard now takes the month from the data itself and corrections live in a separate sheet that survives re-exports.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="outcome"><p><b>Outcome.</b> Changes ship weekly without fear: every engine has a replayable test, every daily file is audited before it leaves, and every model is judged on real outcomes. When someone asks "why this number?", the answer is a row, a rule and a date.</p></div>
+    <div class="tags"><span class="tag">regression testing</span><span class="tag">data validation</span><span class="tag">backtesting</span><span class="tag">git</span><span class="tag">documentation</span></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap pager">
+    <a href="analytics.html"><span>← Previous case</span><b>05 · Loss &amp; sales analytics</b></a>
+    <a class="next" href="index.html#contact"><span>Next →</span><b>Work with me</b></a>
+  </div>
+</section>
+<footer class="band foot"><div class="wrap">Company, people and figures are anonymized; every chart on this page uses illustrative data. © 2026 Silviu Vintilă · <a href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/">LinkedIn</a></div></footer>
+
+<script src="case.js"></script>
+<script>
+Case.charts(function (c, h) {
+  var s = h.svg("c-ml");
+  var base = [77.5, 79, 78], ml = [82, 83.5, 83], lab = ["week 1", "week 2", "week 3"];
+  var Y = function (v) { return 180 - (v - 70) * 9 };
+  [70, 75, 80, 85].forEach(function (v) { h.el("line", { x1: 40, x2: 510, y1: Y(v), y2: Y(v), stroke: c.line }, s); h.txt(s, 34, Y(v) + 4, v + "%", "end") });
+  base.forEach(function (b, k) {
+    var x = 80 + k * 150;
+    h.el("rect", { x: x, y: Y(b), width: 50, height: 180 - Y(b), rx: 2, fill: c.line }, s);
+    h.el("rect", { x: x + 56, y: Y(ml[k]), width: 50, height: 180 - Y(ml[k]), rx: 2, fill: c.leaf }, s);
+    h.txt(s, x + 53, 198, lab[k], "middle");
+  });
+  h.hbars("c-count", [["Rebuilt, on shelf y/n", 88, c.leaf], ["System, on shelf y/n", 87, c.slate], ["System, exact ±1", 85, c.slate], ["Rebuilt, exact ±1", 70, c.apricot]], { labelW: 160, max: 100, fmt: function (v) { return v + "%" } });
+});
+</script>
+</body>
+</html>

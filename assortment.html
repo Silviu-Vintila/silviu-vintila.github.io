@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Assortment &amp; Availability · Silviu Vintilă</title>
+<meta name="description" content="Case study: shelf availability rebuilt from delivery lots, a planogram review with six automatic signals, new-launch tracking, cannibalization and holiday effects by store cluster.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+<div class="top"><div class="wrap"><a href="index.html">← Silviu Vintilă · Portfolio</a><span><a href="index.html#work">Case 04 of 06</a></span></div></div>
+<header class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Case study 04 · Assortment &amp; Availability</span>
+    <h1>Same planogram, very different stores: finding out why</h1>
+    <p class="lead">A set of analyses for the commercial team: was the product on the shelf, does it sell where it is listed, did a launch add sales or take them from its neighbours, and what happens to each type of store in the summer holiday.</p>
+    <div class="facts">
+      <div><span>Grain</span><b>Store × product × day</b></div>
+      <div><span>Audience</span><b>Commercial team &amp; board</b></div>
+      <div><span>Languages</span><b>Romanian + English</b></div>
+      <div><span>Output</span><b>HTML dashboards + Excel</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">The question</span>
+      <h2>"Can we really run one planogram everywhere?"</h2>
+      <p>Hundreds of stores shared the same standard range. Averages said the range worked. Nobody could point to the products that sat dead on some shelves, or were missing exactly where they sold best.</p>
+      <p>New products were launched every few weeks, with no simple way to tell a real success from a product that only took sales from the one next to it.</p>
+    </div>
+    <div>
+      <span class="eyebrow">The foundation</span>
+      <h2>First, know what was on the shelf</h2>
+      <p>Everything rests on one daily fact: was the product on the shelf this morning? I rebuilt it from delivery lots with expiry dates, sales consumed first-in first-out, write-offs taken from expired stock first, and expired lots removed.</p>
+      <div class="formula">AVAILABILITY = days on shelf ÷ days in range<br>LOST SALES ≈ empty days × average daily sales on shelf days</div>
+      <p>It was checked against physical stock counts and against the system before anyone used it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">Planogram review</span>
+    <h2>Six signals, each with a list behind it</h2>
+    <div class="cards three">
+      <div class="card"><span class="k">01 · Dead shelf</span><h3>On shelf, not selling</h3><p>On the shelf at least 80% of days and under one unit a week, over at least four weeks.</p></div>
+      <div class="card"><span class="k">02 · Waste &gt; sales</span><h3>We throw away more than we sell</h3><p>Units written off exceed units sold, with a minimum volume so one bad day doesn't count.</p></div>
+      <div class="card"><span class="k">03 · N-times gap</span><h3>Best stores sell many times more</h3><p>Top 20% vs bottom 20% of stores for the same product, on a size-adjusted index.</p></div>
+      <div class="card"><span class="k">04 · Format matters</span><h3>Strong in one format, weak in another</h3><p>Index above 125 in one store format and below 80 in another: a case for different ranges.</p></div>
+      <div class="card"><span class="k">05 · Concentrated losses</span><h3>A few pairs make most of the waste</h3><p>How much of the loss value comes from the worst 20% of store × product pairs.</p></div>
+      <div class="card"><span class="k">06 · Sells but missing</span><h3>Strong demand, empty shelf</h3><p>Index of 130 or more but on the shelf less than 85% of days, with estimated lost sales.</p></div>
+    </div>
+    <div class="formula" style="margin-top: 18px">RATE = units sold per week, counting only days on the shelf<br>INDEX = RATE ÷ (network average for the product × store size) · 100 = what this store should sell</div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">From the board dashboard</span>
+    <h2>What the commercial team opens</h2>
+    <div class="dashes">
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Range similarity · share of the full range per store</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-sim" viewBox="0 0 520 220" role="img" aria-label="Grid of stores by products showing which products each store carries"></svg>
+        <p class="note">Rows = stores, columns = products; a gap is a missing listing. Shown three ways: all stores, without the economy format, without limited-listing products.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Same product, weakest vs strongest stores</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-gap" viewBox="0 0 520 220" role="img" aria-label="Index of weakest and strongest stores per product"></svg>
+        <div class="legend"><span><i style="background: var(--apricot)"></i>Weakest 20%</span><span><i style="background: var(--leaf)"></i>Strongest 20%</span></div>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Launches · extra sales vs sales moved</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-cannib" viewBox="0 0 520 220" role="img" aria-label="Incremental versus cannibalized sales per launch"></svg>
+        <div class="legend"><span><i style="background: var(--leaf)"></i>New sales</span><span><i style="background: var(--apricot)"></i>Taken from existing products</span></div>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Summer holiday · by store cluster</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-summer" viewBox="0 0 520 220" role="img" aria-label="Sales and loss change in the summer holiday by cluster"></svg>
+        <div class="legend"><span><i style="background: var(--slate)"></i>Sales change</span><span><i style="background: var(--apricot)"></i>Loss rate change</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">Method choices</span>
+      <h2>Apples with apples</h2>
+      <ul class="checks">
+        <li><b>Like-for-like stores</b> for cannibalization and holidays: only stores open before the period, the same stores in every month.</li>
+        <li><b>Recently opened stores excluded</b> from the planogram review, and the first month after opening never counts.</li>
+        <li><b>A launch = all new products in the same subcategory and week</b>, compared 4 weeks before vs weeks 2–5 after, with the rest of the range as the seasonal control.</li>
+        <li><b>Holiday savings are calculated, not assumed:</b> from delisting (losses minus margin) and from orders adjusted to the school-term loss rate.</li>
+      </ul>
+    </div>
+    <div>
+      <span class="eyebrow">Decisions worth telling</span>
+      <h2>The first version was wrong, on purpose</h2>
+      <div class="log">
+        <div><b>Per-product cannibalization</b><p>The first cut measured each product alone and produced absurd ratios. Grouping launches by subcategory and week, with filters for products that matter, gave numbers the team could act on.</p></div>
+        <div><b>The 21-day stock formula</b><p>Reused from the store engine, it put many sales on days with "zero stock". The availability study switched to a full lot-by-lot simulation from a known starting stock.</p></div>
+        <div><b>One column, not three</b><p>Availability was first shown in several scenarios. The team asked for one number, so the most cautious reading became the definition.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="outcome"><p><b>Outcome.</b> One run produces the Excel workbook and a self-contained HTML dashboard, in Romanian for the operations team and English for the commercial team. Each signal comes with the stores and products behind it, so the discussion is about a list, not an average.</p></div>
+    <div class="tags"><span class="tag">FIFO simulation</span><span class="tag">availability</span><span class="tag">cannibalization</span><span class="tag">like-for-like</span><span class="tag">HTML dashboards</span><span class="tag">Parquet cache</span></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap pager">
+    <a href="billing.html"><span>← Previous case</span><b>03 · Partner loss billing</b></a>
+    <a class="next" href="analytics.html"><span>Next case →</span><b>05 · Loss &amp; sales analytics</b></a>
+  </div>
+</section>
+<footer class="band foot"><div class="wrap">Company, people and figures are anonymized; every chart on this page uses illustrative data. © 2026 Silviu Vintilă · <a href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/">LinkedIn</a></div></footer>
+
+<script src="case.js"></script>
+<script>
+Case.charts(function (c, h) {
+  /* similarity grid */
+  var s = h.svg("c-sim"), R = h.rnd(3), rows = 12, cols = 26, cw = 16, chh = 14;
+  for (var i = 0; i < rows; i++) {
+    var miss = i / rows * 0.35;
+    for (var j = 0; j < cols; j++) {
+      var has = R() > miss * (1 - j / cols * 0.8);
+      h.el("rect", { x: 70 + j * cw, y: 12 + i * chh, width: cw - 2, height: chh - 2, rx: 2, fill: has ? c.slateSoft : c.apricot }, s);
+    }
+    h.txt(s, 62, 22 + i * chh, Math.round(100 - miss * 60) + "%", "end");
+  }
+  h.txt(s, 70, 206, "products →   (gaps first, on the left)", "start");
+
+  /* dumbbell */
+  s = h.svg("c-gap");
+  var gap = [["Croissant", 42, 148], ["Sandwich", 55, 131], ["Salad bowl", 30, 170], ["Wrap", 61, 122], ["Sushi box", 25, 190], ["Yogurt cup", 48, 140]];
+  var GX = function (v) { return 110 + v * 1.9 };
+  h.el("line", { x1: GX(100), x2: GX(100), y1: 6, y2: 182, stroke: c.muted, "stroke-dasharray": "3 3" }, s);
+  h.txt(s, GX(100), 204, "network = 100", "middle");
+  gap.forEach(function (g, k) {
+    var y = 20 + k * 28;
+    h.txt(s, 100, y + 4, g[0], "end");
+    h.el("line", { x1: GX(g[1]), x2: GX(g[2]), y1: y, y2: y, stroke: c.line, "stroke-width": 4, "stroke-linecap": "round" }, s);
+    h.el("circle", { cx: GX(g[1]), cy: y, r: 5.5, fill: c.apricot }, s);
+    h.el("circle", { cx: GX(g[2]), cy: y, r: 5.5, fill: c.leaf }, s);
+    h.txt(s, 512, y + 4, "×" + (g[2] / g[1]).toFixed(1), "end", c.ink);
+  });
+
+  /* cannibalization stacked */
+  s = h.svg("c-cannib");
+  var L = [["L1", 80, 20], ["L2", 64, 36], ["L3", 30, 70], ["L4", 72, 28], ["L5", 45, 55], ["L6", 22, 78], ["L7", 58, 42]];
+  L.forEach(function (r, k) {
+    var x = 50 + k * 66, y = 180;
+    h.el("rect", { x: x, y: y - r[1] * 1.6, width: 40, height: r[1] * 1.6, fill: c.leaf }, s);
+    h.el("rect", { x: x, y: y - 160, width: 40, height: r[2] * 1.6, fill: c.apricot }, s);
+    h.txt(s, x + 20, 198, r[0], "middle");
+  });
+  h.txt(s, 44, 24, "100%", "end"); h.txt(s, 44, 184, "0", "end");
+
+  /* summer by cluster: diverging pairs */
+  s = h.svg("c-summer");
+  var cl = [["School", -34, 9], ["Campus", -41, 12], ["Office", -18, 5], ["Residential", -4, 1], ["Tourist", 22, -2]];
+  var ZX = 300, SC = 3.2;
+  h.el("line", { x1: ZX, x2: ZX, y1: 6, y2: 186, stroke: c.muted }, s);
+  cl.forEach(function (r, k) {
+    var y = 10 + k * 36;
+    h.txt(s, 104, y + 16, r[0], "end");
+    [[r[1], c.slate, 0], [r[2], c.apricot, 14]].forEach(function (p) {
+      var w = Math.abs(p[0]) * SC, x = p[0] < 0 ? ZX - w : ZX;
+      h.el("rect", { x: x, y: y + p[2], width: w, height: 12, rx: 2, fill: p[1] }, s);
+      h.txt(s, p[0] < 0 ? x - 4 : x + w + 4, y + p[2] + 10, (p[0] > 0 ? "+" : "") + p[0] + (p[2] ? " pp" : "%"), p[0] < 0 ? "end" : "start", c.ink);
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loss &amp; Sales Analytics · Silviu Vintilă</title>
+<meta name="description" content="Case study: a suite of loss and sales reports for management: six-week evolution with ranked alerts, supplier scorecards, shelf life at delivery, new-product reviews and a budget simulator.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+<div class="top"><div class="wrap"><a href="index.html">← Silviu Vintilă · Portfolio</a><span><a href="index.html#work">Case 05 of 06</a></span></div></div>
+<header class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Case study 05 · Loss &amp; Sales Analytics</span>
+    <h1>Six reports management actually reads</h1>
+    <p class="lead">Around the engines grew a family of reports, each answering one recurring question from operations, buying or the board, each built straight from the database and each rerunnable in minutes.</p>
+    <div class="facts">
+      <div><span>Source</span><b>One SQL extract per report</b></div>
+      <div><span>Grain</span><b>Day × store × product</b></div>
+      <div><span>Valuation</span><b>Net sales · losses at cost</b></div>
+      <div><span>Delivery</span><b>Excel · HTML · slides</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">The suite</span>
+    <h2>One question, one report</h2>
+    <div class="cards three">
+      <div class="card"><span class="k">Sales &amp; losses, 6 weeks</span><h3>"Where is it getting worse?"</h3><p>Six full weeks to yesterday, by store, product, category and area manager, with a delta against each one's own history and an alert sheet ranked by severity.</p></div>
+      <div class="card"><span class="k">Supplier scorecard</span><h3>"Which suppliers cost us most?"</h3><p>Year to date: received, sold and lost per supplier, product and store, loss as a share of sales, month by month.</p></div>
+      <div class="card"><span class="k">Shelf life at delivery</span><h3>"How fresh does it arrive?"</h3><p>Days of shelf life left at the moment of delivery, per supplier and product, as an offline HTML dashboard with an Excel twin.</p></div>
+      <div class="card"><span class="k">New products</span><h3>"Are the launches working?"</h3><p>First sale and first receipt, units sent vs sold vs lost at cost, and each launch's share of its category, weekly and monthly.</p></div>
+      <div class="card"><span class="k">Year-to-date losses</span><h3>"How did each cluster do?"</h3><p>Month by month by store cluster and category, rebuilt from one query and the monthly billing files, impossible lines caught and listed.</p></div>
+      <div class="card"><span class="k">Budget simulator</span><h3>"What if we change the allowance?"</h3><p>Next year's allowance options tested on the real loss distribution, with monthly cohorts of new and taken-over stores.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">Inside the reports</span>
+    <h2>A few of the views</h2>
+    <div class="dashes">
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Alerts this week · ranked by severity</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-alerts" viewBox="0 0 520 200" role="img" aria-label="Number of alerts per type"></svg>
+        <p class="note">Store above its own mean + 2σ, top 5% of the network, product with an atypical day (mean + 3σ), thrown away with no sales, more thrown than sold.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Shelf life left at delivery · by supplier</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-bbd" viewBox="0 0 520 200" role="img" aria-label="Range of shelf-life days left at delivery per supplier"></svg>
+        <p class="note">Box = middle half of deliveries, dot = median. Short boxes far left are the suppliers to talk to.</p>
+      </div>
+      <div class="dash wide">
+        <div class="dash-top"><span class="dash-title">Budget simulator · charge recovered vs allowance level</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-budget" viewBox="0 0 960 230" role="img" aria-label="Recovered charge as a function of allowance, two methods"></svg>
+        <div class="legend"><span><i style="background: var(--leaf)"></i>Mean of max(0, loss − allowance), store by store</span><span><i style="background: var(--apricot)"></i>max(0, mean loss − allowance)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">Why the simulator is right</span>
+      <h2>Averages hide the money</h2>
+      <p>The obvious shortcut is to compare the average store's loss with the allowance. Because stores vary a lot, that underestimates what is recovered: a store far above the allowance pays, a store below it pays nothing, and the two do not cancel out.</p>
+      <div class="formula">right:  mean( max(0, loss_store − allowance) )<br>wrong:  max(0, mean(loss) − allowance)</div>
+      <p>The simulator applies the right version to every real store, then rolls monthly cohorts through the year with the old and the proposed rule side by side.</p>
+    </div>
+    <div>
+      <span class="eyebrow">Built to be rerun</span>
+      <h2>Small engineering that matters</h2>
+      <ul class="checks">
+        <li>Product filters pushed into SQL as an indexed temp table: one slow week went from about 8 minutes to under 20 seconds.</li>
+        <li>Every extract cached per week as Parquet, so a report can be rebuilt without a database connection.</li>
+        <li>Workbooks written to a temporary name and renamed at the end, after two simultaneous runs once corrupted a file.</li>
+        <li>Past one million rows, the daily detail moves to CSV and the sheet switches to weekly grain automatically.</li>
+        <li>Losses valued at purchase price with the price valid on that day; sales at net value.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap">
+    <div class="outcome"><p><b>Outcome.</b> Recurring questions now have a report that answers them the same way every time: one command, one workbook or dashboard, numbers that match the billing engine because they share its rules.</p></div>
+    <div class="tags"><span class="tag">T-SQL</span><span class="tag">pandas</span><span class="tag">Parquet</span><span class="tag">openpyxl charts</span><span class="tag">HTML dashboards</span><span class="tag">simulation</span></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap pager">
+    <a href="assortment.html"><span>← Previous case</span><b>04 · Assortment &amp; availability</b></a>
+    <a class="next" href="quality.html"><span>Next case →</span><b>06 · Trust in the numbers</b></a>
+  </div>
+</section>
+<footer class="band foot"><div class="wrap">Company, people and figures are anonymized; every chart on this page uses illustrative data. © 2026 Silviu Vintilă · <a href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/">LinkedIn</a></div></footer>
+
+<script src="case.js"></script>
+<script>
+Case.charts(function (c, h) {
+  h.hbars("c-alerts", [["Store jump", 12, c.apricot], ["Top 5% network", 15, c.apricot], ["Atypical day", 23, c.slate], ["Waste, no sales", 31, c.slate], ["Waste > sales", 18, c.slate], ["No losses declared", 7, c.line]], { labelW: 140 });
+
+  /* box plot */
+  var s = h.svg("c-bbd");
+  var sup = [["Supplier A", 2, 3, 4, 5, 6], ["Supplier B", 5, 7, 8, 9, 11], ["Supplier C", 1, 2, 2, 3, 4], ["Supplier D", 8, 10, 12, 13, 16], ["Supplier E", 3, 5, 6, 8, 10]];
+  var X = function (v) { return 110 + v * 24 };
+  [0, 4, 8, 12, 16].forEach(function (v) { h.el("line", { x1: X(v), x2: X(v), y1: 6, y2: 176, stroke: c.line }, s); h.txt(s, X(v), 192, v + "d", "middle") });
+  sup.forEach(function (r, k) {
+    var y = 22 + k * 32;
+    h.txt(s, 100, y + 4, r[0], "end");
+    h.el("line", { x1: X(r[1]), x2: X(r[5]), y1: y, y2: y, stroke: c.muted }, s);
+    h.el("rect", { x: X(r[2]), y: y - 9, width: X(r[4]) - X(r[2]), height: 18, rx: 3, fill: r[3] <= 3 ? c.apricotSoft : c.slateSoft, stroke: r[3] <= 3 ? c.apricot : c.slate }, s);
+    h.el("circle", { cx: X(r[3]), cy: y, r: 4, fill: r[3] <= 3 ? c.apricot : c.slate }, s);
+  });
+
+  /* budget curves */
+  s = h.svg("c-budget");
+  var R = h.rnd(17), losses = [];
+  for (var i = 0; i < 400; i++) { var u = R(), v = R(); losses.push(Math.max(0, 3200 * Math.exp(0.75 * Math.sqrt(-2 * Math.log(u + 1e-9)) * Math.cos(6.283 * v)))) }
+  var mean = losses.reduce(function (a, b) { return a + b }, 0) / losses.length;
+  var BX = function (a) { return 70 + a / 8000 * 860 }, BY = function (v) { return 200 - v / 3000 * 180 };
+  [0, 1000, 2000, 3000].forEach(function (v) { h.el("line", { x1: 66, x2: 940, y1: BY(v), y2: BY(v), stroke: c.line }, s); h.txt(s, 60, BY(v) + 4, v / 1000 + "k", "end") });
+  [0, 2000, 4000, 6000, 8000].forEach(function (a) { h.txt(s, BX(a), 220, a / 1000 + "k allowance", "middle") });
+  var d1 = "", d2 = "";
+  for (var a = 0; a <= 8000; a += 100) {
+    var right = losses.reduce(function (acc, l) { return acc + Math.max(0, l - a) }, 0) / losses.length;
+    var wrong = Math.max(0, mean - a);
+    d1 += (a ? "L" : "M") + BX(a) + " " + BY(Math.min(right, 3000));
+    d2 += (a ? "L" : "M") + BX(a) + " " + BY(Math.min(wrong, 3000));
+  }
+  h.el("path", { d: d1, fill: "none", stroke: c.leaf, "stroke-width": 2.6 }, s);
+  h.el("path", { d: d2, fill: "none", stroke: c.apricot, "stroke-width": 2, "stroke-dasharray": "5 4" }, s);
+});
+</script>
+</body>
+</html>

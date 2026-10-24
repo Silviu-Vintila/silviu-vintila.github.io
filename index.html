@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Silviu Vintilă · Retail Data Automation</title>
+<meta name="description" content="Python, SQL and Power BI automation for retail operations: daily replenishment, supplier ordering, partner loss billing and assortment analytics. Case studies with illustrative data.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Silviu Vintilă · Retail Data Automation">
+<meta property="og:description" content="Forecasting, replenishment and loss analytics engines for 300+ stores. Three case studies, illustrative data.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 1120px) of full-width bands; each case study pairs a narrative column with a live mini-dashboard. Motif: the shelf-label ticket. */
+:root {
+  --paper: #f7f9f8; --card: #ffffff; --ink: #14201b; --muted: #5a6b64; --line: #dbe3df;
+  --leaf: #2f7d4f; --leaf-soft: #e3f1e8; --apricot: #d9772b; --apricot-soft: #fbeadb; --slate: #3d5a80; --slate-soft: #e4eaf3;
+  --hero: #14201b; --hero-fg: #eef4f1; --hero-muted: #9fb3aa;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #101714; --card: #17211c; --ink: #e6eee9; --muted: #98aaa2; --line: #2a3832;
+  --leaf: #5cbf85; --leaf-soft: #1c3528; --apricot: #f0a05e; --apricot-soft: #3a2a1b; --slate: #8fb0d8; --slate-soft: #1e2a39;
+  --hero: #0b110e; --hero-fg: #eef4f1; --hero-muted: #9fb3aa; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #101714; --card: #17211c; --ink: #e6eee9; --muted: #98aaa2; --line: #2a3832;
+  --leaf: #5cbf85; --leaf-soft: #1c3528; --apricot: #f0a05e; --apricot-soft: #3a2a1b; --slate: #8fb0d8; --slate-soft: #1e2a39;
+  --hero: #0b110e; --hero-fg: #eef4f1; --hero-muted: #9fb3aa; color-scheme: dark }
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } * { animation: none !important; transition: none !important } }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--f-body) }
+.band { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 72px }
+.wrap { max-width: 1120px; margin: 0 auto }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0 }
+h2 { font-size: clamp(30px, 4.4vw, 44px); line-height: 1.08; font-weight: 800; letter-spacing: -0.02em }
+h3 { font-size: 22px; line-height: 1.2; font-weight: 700 }
+p { margin: 0 0 14px; max-width: 66ch }
+a { color: var(--leaf) }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--apricot); outline-offset: 3px }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--leaf); margin-bottom: 14px; display: block }
+.lead { font-size: 19px; color: var(--muted); max-width: 60ch }
+.tag { display: inline-block; font: 500 12px/1 var(--f-mono); padding: 6px 9px; border-radius: 4px; background: var(--leaf-soft); color: var(--leaf) }
+.tags { display: flex; flex-wrap: wrap; gap: 6px }
+
+/* hero */
+.hero { background: var(--hero); color: var(--hero-fg); padding-block: 64px 80px }
+.hero .eyebrow { color: #8fd3ad }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 56px; align-items: center }
+.hero h1 { font-size: clamp(40px, 6.4vw, 76px); line-height: .98; font-weight: 800; letter-spacing: -0.035em }
+.hero h1 em { font-style: normal; color: #8fd3ad }
+.hero .lead { color: var(--hero-muted); margin-top: 22px }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 28px; font: 14px/1.4 var(--f-mono); color: var(--hero-muted) }
+.hero-meta b { color: var(--hero-fg); font-weight: 500 }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px }
+.btn { display: inline-block; font: 600 15px/1 var(--f-body); padding: 14px 20px; border-radius: 6px; text-decoration: none; border: 1px solid transparent }
+.btn-main { background: #8fd3ad; color: #0b110e }
+.btn-ghost { border-color: #3c4f46; color: var(--hero-fg) }
+
+/* shelf-label ticket: the motif */
+.ticket { background: #fbfdf9; color: #14201b; border-radius: 10px; padding: 22px 22px 18px; font-family: var(--f-mono); box-shadow: 0 24px 60px -24px rgba(0,0,0,.55); position: relative; transform: rotate(-1.2deg) }
+.ticket::before { content: ""; position: absolute; left: 22px; right: 22px; top: 0; height: 6px; background: repeating-linear-gradient(90deg, #14201b 0 2px, transparent 2px 5px); opacity: .18 }
+.t-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #5a6b64; text-transform: uppercase; letter-spacing: .1em }
+.t-name { font: 700 22px/1.15 var(--f-display); margin: 10px 0 14px; letter-spacing: -0.01em }
+.t-rows { display: grid; gap: 6px; font-size: 14px; border-top: 1px dashed #c8d3cd; padding-top: 12px }
+.t-row { display: flex; justify-content: space-between; gap: 12px }
+.t-row span:last-child { font-variant-numeric: tabular-nums }
+.t-row.minus span:last-child { color: #b85a17 }
+.t-send { display: flex; justify-content: space-between; align-items: baseline; border-top: 2px solid #14201b; margin-top: 12px; padding-top: 10px }
+.t-send b { font: 800 44px/1 var(--f-display); color: #2f7d4f; font-variant-numeric: tabular-nums }
+.t-why { font-size: 12px; color: #5a6b64; margin-top: 10px; line-height: 1.5 }
+.t-cycle { margin-top: 14px; display: flex; gap: 6px }
+.t-cycle button { font: 500 11px/1 var(--f-mono); border: 1px solid #c8d3cd; background: transparent; color: #14201b; padding: 7px 9px; border-radius: 4px; cursor: pointer }
+.t-cycle button[aria-pressed="true"] { background: #14201b; color: #fbfdf9; border-color: #14201b }
+
+/* numbers strip */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+.strip div { padding: 26px 20px 24px; border-left: 1px solid var(--line) }
+.strip div:first-child { border-left: 0 }
+.strip b { display: block; font: 800 36px/1 var(--f-display); letter-spacing: -0.02em }
+.strip span { color: var(--muted); font-size: 14px }
+
+/* services */
+.svc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 48px; margin-top: 36px }
+.svc h3 { font-size: 20px; margin-bottom: 8px }
+.svc p { color: var(--muted); margin: 0 }
+.svc .k { font: 500 12px/1 var(--f-mono); color: var(--apricot); display: block; margin-bottom: 10px; letter-spacing: .08em }
+
+/* case studies */
+.case { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 48px; align-items: start; padding-block: 56px; border-top: 1px solid var(--line) }
+.case:first-of-type { border-top: 0 }
+.case h3 { font-size: clamp(26px, 3vw, 32px); margin: 6px 0 14px; font-weight: 800; letter-spacing: -0.015em }
+.case .ctx { font: 13px/1.5 var(--f-mono); color: var(--muted); margin-bottom: 18px }
+.blocks { display: grid; gap: 16px; margin: 20px 0 22px }
+.blocks h4 { font: 600 13px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px }
+.blocks p, .blocks ul { margin: 0; color: var(--ink) }
+.blocks ul { padding-left: 18px; display: grid; gap: 4px }
+.result { background: var(--leaf-soft); border-radius: 8px; padding: 14px 16px; margin-bottom: 18px }
+.read { display: inline-block; margin-top: 18px; font: 600 15px/1 var(--f-body); color: var(--leaf); text-decoration: none; border-bottom: 2px solid var(--leaf); padding-bottom: 4px }
+.read:hover { color: var(--ink); border-color: var(--ink) }
+.dives { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 32px }
+.dive { display: flex; flex-direction: column; gap: 8px; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px }
+.dive:hover { border-color: var(--leaf) }
+.dive span { font: 500 12px/1 var(--f-mono); color: var(--apricot); letter-spacing: .08em }
+.dive b { font: 700 19px/1.25 var(--f-display) }
+.dive p { margin: 0; color: var(--muted); font-size: 15px; flex: 1 }
+.dive i { font-style: normal; font: 600 14px/1 var(--f-body); color: var(--leaf) }
+@media (max-width: 920px) { .dives { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 600px) { .dives { grid-template-columns: minmax(0, 1fr) } }
+.result h4 { color: var(--leaf) }
+
+.dash { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 18px) }
+.dash-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px }
+.dash-title { font: 600 14px/1.3 var(--f-body) }
+.demo { font: 500 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--apricot); background: var(--apricot-soft); padding: 5px 7px; border-radius: 3px; white-space: nowrap }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px }
+.kpi { background: var(--paper); border-radius: 8px; padding: 10px 12px }
+.kpi span { display: block; font: 11px/1.3 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em }
+.kpi b { font: 700 22px/1.2 var(--f-display); font-variant-numeric: tabular-nums }
+.kpi i { font-style: normal; font: 12px/1 var(--f-mono); margin-left: 4px }
+.up { color: var(--leaf) } .down { color: var(--apricot) }
+.chart { width: 100%; height: auto; display: block }
+.chart text { font-family: var(--f-mono); font-size: 10px; fill: var(--muted) }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font: 12px/1 var(--f-mono); color: var(--muted); margin-top: 10px }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px }
+.sub { font: 12px/1.4 var(--f-mono); color: var(--muted); margin: 14px 0 8px }
+
+/* more work */
+.more { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 36px }
+.mini { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 10px }
+.mini h3 { font-size: 18px }
+.mini p { color: var(--muted); font-size: 15px; margin: 0; flex: 1 }
+.spark { height: 46px }
+
+/* process */
+.steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; margin-top: 36px; counter-reset: s }
+.step { border-top: 3px solid var(--ink); padding-top: 14px }
+.step::before { counter-increment: s; content: "0" counter(s); font: 500 13px/1 var(--f-mono); color: var(--apricot); display: block; margin-bottom: 10px }
+.step h3 { font-size: 18px; margin-bottom: 6px }
+.step p { font-size: 15px; color: var(--muted); margin: 0 }
+
+.stack { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin-top: 30px }
+.stack h4 { font: 600 13px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px }
+.stack ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 15px }
+
+.contact { background: var(--hero); color: var(--hero-fg) }
+.contact .lead { color: var(--hero-muted) }
+.contact h2 { color: var(--hero-fg) }
+.contact-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 48px; align-items: end }
+.contact .eyebrow { color: #8fd3ad }
+.fine { font: 12px/1.6 var(--f-mono); color: var(--hero-muted); margin-top: 40px; border-top: 1px solid #2b3a33; padding-top: 18px }
+
+@media (max-width: 920px) {
+  .hero-grid, .case, .contact-grid { grid-template-columns: minmax(0, 1fr) }
+  .dash { position: static }
+  .more { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .stack { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .ticket { transform: none; max-width: 420px }
+}
+@media (max-width: 600px) {
+  .band { padding-block: 52px }
+  .svc, .more, .steps, .stack { grid-template-columns: minmax(0, 1fr) }
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  .strip div:nth-child(3) { border-left: 0 }
+  .strip div:nth-child(n+3) { border-top: 1px solid var(--line) }
+  .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px }
+  .kpi b { font-size: 18px }
+}
+</style>
+</head>
+<body>
+
+<header class="band hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Silviu Vintilă · Data automation for retail operations</span>
+      <h1>Every morning, <em>300 stores</em> get the right fresh food. I build the code that decides how much.</h1>
+      <p class="lead">I turn spreadsheet rules, SQL tables and tribal knowledge into tested Python engines: daily replenishment, supplier ordering and partner billing that run in minutes and explain every number they produce.</p>
+      <div class="hero-meta"><span><b>Python</b> · pandas</span><span><b>SQL</b> Server / Azure</span><span><b>Excel</b> automation</span><span><b>ML</b> integration</span></div>
+      <div class="cta">
+        <a class="btn btn-main" href="#work">See the work</a>
+        <a class="btn btn-ghost" href="#contact">Start a project</a>
+      </div>
+    </div>
+    <div>
+      <div class="ticket" aria-live="polite">
+        <div class="t-head"><span id="t-store">Store 0412 · Tue</span><span>Push decision</span></div>
+        <div class="t-name" id="t-name">Ham &amp; cheese croissant 80 g</div>
+        <div class="t-rows" id="t-rows"></div>
+        <div class="t-send"><span>Send tomorrow</span><b id="t-send">4</b></div>
+        <div class="t-why" id="t-why"></div>
+        <div class="t-cycle" role="group" aria-label="Example decisions">
+          <button type="button" aria-pressed="true" data-i="0">Bakery</button>
+          <button type="button" aria-pressed="false" data-i="1">New launch</button>
+          <button type="button" aria-pressed="false" data-i="2">Weekend</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="band" style="padding-block: 0">
+  <div class="wrap strip">
+    <div><b>4</b><span>engines in daily production</span></div>
+    <div><b>15+</b><span>analyses &amp; reports for management</span></div>
+    <div><b>300+</b><span>stores served daily</span></div>
+    <div><b>Minutes</b><span>from raw data to decision</span></div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">What I do</span>
+    <h2>Operational decisions, written as code you can trust</h2>
+    <div class="svc">
+      <div><span class="k">FORECAST &amp; REPLENISHMENT</span><h3>Daily store allocation</h3><p>Demand by weekday, safety buffers by store tier, stock rebuilt from delivery lots, anti-waste caps and fair sharing of limited supplier stock.</p></div>
+      <div><span class="k">ORDERING &amp; PLANNING</span><h3>Supplier order proposals</h3><p>Orders that follow your supplier calendar, project stock day by day and adjust for trend, holidays and new store openings.</p></div>
+      <div><span class="k">BILLING &amp; LOSSES</span><h3>Rule-heavy financial reports</h3><p>Monthly partner billing with tiered allowances, grace periods and manual overrides, plus a weekly evolution view for management meetings.</p></div>
+      <div><span class="k">ASSORTMENT &amp; AVAILABILITY</span><h3>Shelf and range analytics</h3><p>Was the product on the shelf, does it sell where it is listed, did the new launch add sales or steal them? Answers per store and product, not averages.</p></div>
+      <div><span class="k">BOARD REPORTING</span><h3>Dashboards people actually open</h3><p>Self-contained HTML dashboards and Excel twins with native charts, in Romanian and English, generated straight from the database in one run.</p></div>
+      <div><span class="k">EXCEL → PYTHON</span><h3>Migration with proof</h3><p>I rebuild Excel and Power Query logic in Python, then prove it matches, with replayable regression tests and rule audits on every run.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="work" style="padding-top: 24px">
+  <div class="wrap">
+    <span class="eyebrow">Case studies</span>
+    <h2>Four flagship builds</h2>
+    <p class="lead" style="margin-top: 14px">Built for a convenience-retail franchise network. Company and data are anonymized; every chart on this page uses illustrative numbers.</p>
+
+    <!-- CASE 1 -->
+    <article class="case" id="replenishment">
+      <div>
+        <span class="tag">01 · Forecast &amp; Replenishment</span>
+        <h3>A daily push engine that thinks before it ships</h3>
+        <div class="ctx">300+ stores × ~140 fresh SKUs · runs every weekday · replaced a fragile Excel/VBA master</div>
+        <div class="blocks">
+          <div><h4>The problem</h4><p>Fresh food was allocated by a large Excel model. It was slow, hard to change, and nobody could say why a store got 3 or 30 units. Short shelf life meant every wrong unit became waste or an empty shelf.</p></div>
+          <div><h4>What I built</h4><ul>
+            <li>Demand per store and weekday, with buffers by store tier and covered-days logic (Friday covers the weekend).</li>
+            <li>Stock reconstructed from delivery lots: FIFO sales, expiry, write-offs, so the engine knows what is really on the shelf.</li>
+            <li>Anti-waste rule: never send more than the store can sell before expiry.</li>
+            <li>Supplier allocation: cut by equal coverage when stock is short, share surplus by sales velocity when it is long.</li>
+            <li>New stores and launches: geo-neighbours within 1.5 km, similar products, opening-day completion.</li>
+            <li>An ML forecast plugged in as the demand source, with automatic fallback when it is stale.</li>
+          </ul></div>
+        </div>
+        <div class="result"><h4 style="font: 600 13px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 6px">Outcome</h4>
+          <p style="margin: 0">Every quantity is explained column by column. A rule audit and a replayable regression test run on each change. A 3-week backtest of the ML switch showed fewer units shipped while more demand was covered.</p></div>
+        <div class="tags"><span class="tag">pandas</span><span class="tag">SQL Server</span><span class="tag">xlsxwriter</span><span class="tag">MSAL / MFA</span><span class="tag">regression tests</span></div>
+        <a class="read" href="replenishment.html">Read the full case study →</a>
+      </div>
+      <div class="dash" aria-label="Illustrative replenishment dashboard">
+        <div class="dash-top"><span class="dash-title">Push control room · Tuesday</span><span class="demo">Illustrative data</span></div>
+        <div class="kpis">
+          <div class="kpi"><span>Units out</span><b>38.4k</b></div>
+          <div class="kpi"><span>Demand covered</span><b>85%</b><i class="up">▲ 4 pts</i></div>
+          <div class="kpi"><span>Waste risk</span><b>2.1%</b><i class="up">▼ 0.6</i></div>
+        </div>
+        <svg class="chart" id="c-forecast" viewBox="0 0 520 210" role="img" aria-label="Forecast band versus actual sales over 4 weeks"></svg>
+        <div class="legend"><span><i style="background: var(--leaf)"></i>Forecast</span><span><i style="background: var(--leaf-soft); border: 1px solid var(--leaf)"></i>Safety buffer</span><span><i style="background: var(--ink)"></i>Actual sales</span></div>
+        <div class="sub">Surplus sharing · days of cover after allocation</div>
+        <svg class="chart" id="c-cover" viewBox="0 0 520 120" role="img" aria-label="Days of cover per store before and after surplus sharing"></svg>
+      </div>
+    </article>
+
+    <!-- CASE 2 -->
+    <article class="case" id="ordering">
+      <div>
+        <span class="tag">02 · Supplier Orders</span>
+        <h3>Order proposals that follow the supplier calendar</h3>
+        <div class="ctx">11 suppliers · two-week rolling plan · holiday and store-opening aware</div>
+        <div class="blocks">
+          <div><h4>The problem</h4><p>Each supplier has its own order days, delivery days and coverage windows. Buyers guessed quantities a week ahead, with no view of stock at delivery or of next week's school holiday.</p></div>
+          <div><h4>What I built</h4><ul>
+            <li>A calendar reader: order day → store delivery day → days covered, checked so every week is covered exactly once.</li>
+            <li>Day-by-day stock simulation to each delivery, with lot expiry and planned deliveries.</li>
+            <li>Forecast with store trend, a holiday factor learned from past school holidays, and new openings from their neighbours.</li>
+            <li>Rounding to case size and MOQ, with a per-store breakdown behind every supplier line.</li>
+            <li>A holiday analysis: indexed sales per store and category for every past vacation.</li>
+          </ul></div>
+        </div>
+        <div class="result"><h4 style="font: 600 13px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 6px">Outcome</h4>
+          <p style="margin: 0">One file each morning: what to order today, the 14-day plan, and why. Shipped with a manual and a slide deck for the team.</p></div>
+        <div class="tags"><span class="tag">simulation</span><span class="tag">seasonality</span><span class="tag">geo matching</span><span class="tag">python-pptx</span></div>
+        <a class="read" href="ordering.html">Read the full case study →</a>
+      </div>
+      <div class="dash" aria-label="Illustrative ordering dashboard">
+        <div class="dash-top"><span class="dash-title">Order plan · next 14 days</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-plan" viewBox="0 0 520 230" role="img" aria-label="Order heatmap by supplier and day"></svg>
+        <div class="sub">Sales index during school holidays · vs. normal weeks</div>
+        <svg class="chart" id="c-holiday" viewBox="0 0 520 150" role="img" aria-label="Sales index during past holidays"></svg>
+      </div>
+    </article>
+
+    <!-- CASE 3 -->
+    <article class="case" id="billing">
+      <div>
+        <span class="tag">03 · Partner Losses &amp; Billing</span>
+        <h3>Monthly billing with rules nobody had to re-explain</h3>
+        <div class="ctx">300+ partner stores · tiered allowances · handover / takeover splits</div>
+        <div class="blocks">
+          <div><h4>The problem</h4><p>Partners pay for losses above an allowance that depends on store age, agent changes and region, day by day. The old process took days of manual Excel work, and disputes were hard to answer.</p></div>
+          <div><h4>What I built</h4><ul>
+            <li>A day-by-day allowance engine: grace periods, tiers by month since takeover, regional exceptions.</li>
+            <li>Manual corrections in one editable file: exclusions, board-approved ceilings, special windows.</li>
+            <li>Per-store dashboards generated automatically for every partner complaint.</li>
+            <li>A weekly evolution section for the Monday meeting: who crossed the ceiling, which categories pushed them, anomalies.</li>
+            <li>Purchase-price view of the same summary, and guards that refuse stale or wrong input files.</li>
+          </ul></div>
+        </div>
+        <div class="result"><h4 style="font: 600 13px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 6px">Outcome</h4>
+          <p style="margin: 0">The monthly report runs in minutes instead of days, and every partner question gets a day-by-day explanation. Dashboards were compared cell by cell before and after each change: identical where they should be.</p></div>
+        <div class="tags"><span class="tag">openpyxl</span><span class="tag">Power Query</span><span class="tag">financial rules</span><span class="tag">git</span></div>
+        <a class="read" href="billing.html">Read the full case study →</a>
+      </div>
+      <div class="dash" aria-label="Illustrative billing dashboard">
+        <div class="dash-top"><span class="dash-title">Weekly evolution · Monday meeting</span><span class="demo">Illustrative data</span></div>
+        <div class="kpis">
+          <div class="kpi"><span>Over ceiling</span><b>142</b><i class="down">▲ 9</i></div>
+          <div class="kpi"><span>New this week</span><b>11</b></div>
+          <div class="kpi"><span>Anomalies</span><b>6</b></div>
+        </div>
+        <svg class="chart" id="c-weeks" viewBox="0 0 520 170" role="img" aria-label="Stores over ceiling by week and cluster"></svg>
+        <div class="legend"><span><i style="background: var(--slate)"></i>Mature</span><span><i style="background: var(--apricot)"></i>Changed agent</span><span><i style="background: var(--leaf)"></i>New store</span></div>
+        <div class="sub">What pushed stores over the ceiling this week</div>
+        <svg class="chart" id="c-cats" viewBox="0 0 520 130" role="img" aria-label="Categories behind the overrun"></svg>
+      </div>
+    </article>
+
+    <!-- CASE 4 -->
+    <article class="case" id="assortment">
+      <div>
+        <span class="tag">04 · Assortment &amp; Availability</span>
+        <h3>Same planogram, very different stores: finding out why</h3>
+        <div class="ctx">store × product × day · shelf stock rebuilt from delivery lots · board deck in Romanian and English</div>
+        <div class="blocks">
+          <div><h4>The problem</h4><p>Stores with the same planogram were assumed to behave the same. Nobody could say which products sat dead on a shelf, which were missing exactly where they sell best, or whether new launches added sales or only took them from similar products.</p></div>
+          <div><h4>What I built</h4><ul>
+            <li>Daily on-shelf status rebuilt from delivery lots (FIFO sales, write-offs, expiry), validated against system stock counts.</li>
+            <li>Availability per product and store: days on shelf ÷ days in range, with estimated lost sales on empty days.</li>
+            <li>A sales index adjusted for store size, so a small store is not flagged just for being small.</li>
+            <li>Six automatic signals: dead shelf, waste above sales, N-times gaps between stores, format effects, concentrated losses, sells-but-missing.</li>
+            <li>New-launch tracking (sent vs sold vs wasted, week by week), a like-for-like cannibalization check, and the summer-holiday effect by store cluster (school, office, campus).</li>
+          </ul></div>
+        </div>
+        <div class="result"><h4 style="font: 600 13px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 6px">Outcome</h4>
+          <p style="margin: 0">One run produces a board-ready HTML dashboard and an Excel workbook in two languages. Every signal comes with the stores and products behind it, so the commercial team acts on a list, not on an average.</p></div>
+        <div class="tags"><span class="tag">FIFO simulation</span><span class="tag">availability</span><span class="tag">cannibalization</span><span class="tag">like-for-like</span><span class="tag">HTML dashboards</span></div>
+        <a class="read" href="assortment.html">Read the full case study →</a>
+      </div>
+      <div class="dash" aria-label="Illustrative assortment dashboard">
+        <div class="dash-top"><span class="dash-title">Planogram review · standard stores</span><span class="demo">Illustrative data</span></div>
+        <div class="kpis">
+          <div class="kpi"><span>On-shelf availability</span><b>93%</b></div>
+          <div class="kpi"><span>Dead-shelf pairs</span><b>186</b></div>
+          <div class="kpi"><span>Sells but missing</span><b>41</b></div>
+        </div>
+        <svg class="chart" id="c-gap" viewBox="0 0 520 200" role="img" aria-label="Sales index of the weakest and strongest stores per product"></svg>
+        <div class="legend"><span><i style="background: var(--apricot)"></i>Weakest 20% of stores</span><span><i style="background: var(--leaf)"></i>Strongest 20%</span></div>
+        <div class="sub">Signals found this month · store × product pairs</div>
+        <svg class="chart" id="c-signals" viewBox="0 0 520 150" role="img" aria-label="Number of store-product pairs per signal"></svg>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="band" id="deep-dives" style="padding-top: 24px">
+  <div class="wrap">
+    <span class="eyebrow">Deep dives</span>
+    <h2>Six case studies, one page each</h2>
+    <p class="lead" style="margin-top: 14px">The problem, the rules in plain words, the checks behind them and the decisions along the way.</p>
+    <div class="dives">
+      <a class="dive" href="replenishment.html"><span>01</span><b>Forecast &amp; replenishment</b><p>The daily engine: twelve steps from freshness gate to rule audit.</p><i>Read →</i></a>
+      <a class="dive" href="ordering.html"><span>02</span><b>Supplier orders</b><p>Calendar logic, holiday factors and stores that haven't opened yet.</p><i>Read →</i></a>
+      <a class="dive" href="billing.html"><span>03</span><b>Partner loss billing</b><p>A day-by-day allowance engine with layered manual overrides.</p><i>Read →</i></a>
+      <a class="dive" href="assortment.html"><span>04</span><b>Assortment &amp; availability</b><p>Shelf stock from lots, six planogram signals, cannibalization.</p><i>Read →</i></a>
+      <a class="dive" href="analytics.html"><span>05</span><b>Loss &amp; sales analytics</b><p>Six reports for management, from ranked alerts to a budget simulator.</p><i>Read →</i></a>
+      <a class="dive" href="quality.html"><span>06</span><b>Trust in the numbers</b><p>Regression replay, rule audits, backtests and the bugs they caught.</p><i>Read →</i></a>
+    </div>
+  </div>
+</section>
+
+<section class="band" style="background: var(--card); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)">
+  <div class="wrap">
+    <span class="eyebrow">More builds</span>
+    <h2>Tools around the engines</h2>
+    <div class="more">
+      <div class="mini"><svg class="spark" id="s1" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Long-life stock push</h3><p>Splits a limited quantity of ambient stock across stores: need = daily sales × days to expiry − stock, capped by shelf space, best sellers first, never above what is available.</p></div>
+      <div class="mini"><svg class="spark" id="s2" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>ML forecast backtest</h3><p>Compared a gradient-boosting forecast with the weekday baseline, using only the forecast available each morning, then wired it in with a switch and a fallback.</p></div>
+      <div class="mini"><svg class="spark" id="s3" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Stock accuracy audit</h3><p>Rebuilt shelf stock from delivery lots and compared it with the system, which exposed a double-counted day of sales in the inherited formula.</p></div>
+      <div class="mini"><svg class="spark" id="s4" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Sales &amp; loss report with alerts</h3><p>Six weeks of day × store × product data, weekly evolution per store, manager and category, and an alert sheet that ranks anomalies by severity.</p></div>
+      <div class="mini"><svg class="spark" id="s5" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Shelf life at delivery</h3><p>How many days of shelf life each supplier delivery really arrived with, as an offline HTML dashboard and an Excel twin with native charts.</p></div>
+      <div class="mini"><svg class="spark" id="s6" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Supplier scorecard, year to date</h3><p>Received, sold and lost per supplier, product and store, with loss as a share of sales and the month-by-month trend.</p></div>
+      <div class="mini"><svg class="spark" id="s7" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>New-product board report</h3><p>First sale, first receipt, units sent vs sold vs lost at purchase price, and each launch's share of its category, by week and month.</p></div>
+      <div class="mini"><svg class="spark" id="s8" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Store × product profiles</h3><p>Eight weeks of history per store, product and weekday, labelled automatically: not selling, high waste, discount-driven, runs out, balanced.</p></div>
+      <div class="mini"><svg class="spark" id="s9" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Allowance policy simulator</h3><p>Simulated next year's ceiling options on the real loss distribution to show the budget impact of each policy before it was decided.</p></div>
+      <div class="mini"><svg class="spark" id="s10" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Rule audit &amp; regression harness</h3><p>Records each weekday's SQL inputs once, replays the engine offline, and checks a dozen business rules on every output before it ships.</p></div>
+      <div class="mini"><svg class="spark" id="s11" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Year-to-date loss review</h3><p>Month-by-month losses by store cluster and category, rebuilt from one query and the monthly billing files, with impossible lines (barcodes typed as quantity) caught and listed.</p></div>
+      <div class="mini"><svg class="spark" id="s12" viewBox="0 0 200 46" aria-hidden="true"></svg><h3>Report &amp; slide automation</h3><p>Excel workbooks with live formulas and charts, table-diff tools for allocation versions, and PowerPoint decks generated straight from the data.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">How I work</span>
+    <h2>From "it's in the spreadsheet" to code you can audit</h2>
+    <div class="steps">
+      <div class="step"><h3>Map the rules</h3><p>I read the existing Excel, queries and people's habits, and write each rule down in plain language.</p></div>
+      <div class="step"><h3>Rebuild in code</h3><p>One engine per decision, with every intermediate number kept as a visible column.</p></div>
+      <div class="step"><h3>Test against reality</h3><p>Backtests on real outcomes, regression replays, and a cell-by-cell match with the old output.</p></div>
+      <div class="step"><h3>Ship with guardrails</h3><p>Freshness checks, stop conditions, fallbacks and a rule audit on every run.</p></div>
+      <div class="step"><h3>Hand over</h3><p>Manuals, slide decks and a reference guide, so the team owns it after I leave.</p></div>
+    </div>
+    <div class="stack">
+      <div><h4>Languages</h4><ul><li>Python</li><li>SQL (T-SQL)</li><li>Power Query M</li><li>VBA (reading &amp; replacing)</li></ul></div>
+      <div><h4>Data</h4><ul><li>pandas, NumPy</li><li>Azure SQL, pyodbc</li><li>Parquet / pickle caches</li><li>Excel at scale</li></ul></div>
+      <div><h4>Output</h4><ul><li>xlsxwriter, openpyxl</li><li>python-pptx</li><li>HTML dashboards</li><li>Automated per-store reports</li></ul></div>
+      <div><h4>Quality</h4><ul><li>git</li><li>Regression replay</li><li>Rule audits</li><li>Backtesting</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="band contact" id="contact">
+  <div class="wrap">
+    <div class="contact-grid">
+      <div>
+        <span class="eyebrow">Available for freelance projects</span>
+        <h2>Have a spreadsheet that runs your stores?</h2>
+        <p class="lead" style="margin-top: 16px">I help retail and distribution teams automate replenishment, ordering and loss reporting. Send me a short description of the process and the files you use today. I reply with a plan and a fixed quote.</p>
+      </div>
+      <div>
+        <p style="color: var(--hero-muted); font: 14px/1.6 var(--f-mono); margin: 0 0 6px">Silviu Vintilă · Romania · remote, EU time zones</p>
+        <p style="color: var(--hero-muted); font: 14px/1.6 var(--f-mono); margin: 0 0 18px">English · Romanian</p>
+        <div class="cta" style="margin-top: 0">
+          <a class="btn btn-main" href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/" target="_blank" rel="noopener">Message me on LinkedIn</a>
+        </div>
+      </div>
+    </div>
+    <p class="fine">Client work is described with permission-safe detail only: company, people and figures are anonymized, and all dashboards on this page show illustrative data. © 2026 Silviu Vintilă</p>
+  </div>
+</section>
+
+<script>
+(function () {
+  var css = function (v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() };
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e }
+  function txt(parent, x, y, s, anchor) { var t = el("text", { x: x, y: y, "text-anchor": anchor || "start" }, parent); t.textContent = s; return t }
+  function rnd(seed) { return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280 } }
+
+  /* ticket: three example decisions */
+  var tickets = [
+    { store: "Store 0412 · Tue", name: "Ham & cheese croissant 80 g", rows: [["Forecast Wed (weekday avg)", "5.6"], ["Safety buffer (tier B)", "+1.8"], ["Stock at delivery", "−3", 1], ["Sellable before expiry", "cap 9"]], send: 4, why: "Demand 7.4 minus 3 on shelf, rounded. Under the expiry cap, so nothing is cut." },
+    { store: "Store 0188 · Thu", name: "Spicy strips baguette 240 g (launch)", rows: [["Own sales (4 days)", "2.8 / day"], ["Neighbours ≤ 1.5 km", "4.5 / day"], ["New-product rule", "max × 1.3"], ["Stock at delivery", "−2", 1]], send: 4, why: "No history yet, so it borrows from nearby stores, then subtracts what is already there." },
+    { store: "Store 0057 · Fri", name: "Greek yogurt 150 g", rows: [["Covers Fri + Sat + Sun", "9.1"], ["Safety buffer (tier A)", "+3.4"], ["Expiring before Monday", "−2", 1], ["Stock at delivery", "−4", 1]], send: 7, why: "Friday covers the weekend. Lots that expire by Monday do not count as stock." }
+  ];
+  function showTicket(i) {
+    var t = tickets[i];
+    document.getElementById("t-store").textContent = t.store;
+    document.getElementById("t-name").textContent = t.name;
+    document.getElementById("t-send").textContent = t.send;
+    document.getElementById("t-why").textContent = t.why;
+    var r = document.getElementById("t-rows"); r.innerHTML = "";
+    t.rows.forEach(function (row) { var d = document.createElement("div"); d.className = "t-row" + (row[2] ? " minus" : ""); d.innerHTML = "<span></span><span></span>"; d.children[0].textContent = row[0]; d.children[1].textContent = row[1]; r.appendChild(d) });
+    document.querySelectorAll(".t-cycle button").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.i === i)) });
+  }
+  document.querySelectorAll(".t-cycle button").forEach(function (b) { b.addEventListener("click", function () { showTicket(+b.dataset.i) }) });
+  showTicket(0);
+
+  function draw() {
+    var ink = css("--ink"), muted = css("--muted"), line = css("--line"), leaf = css("--leaf"), leafSoft = css("--leaf-soft"), apricot = css("--apricot"), slate = css("--slate"), paper = css("--paper");
+
+    /* forecast band vs actual */
+    var s = document.getElementById("c-forecast"); s.innerHTML = "";
+    var R = rnd(7), n = 28, base = [], act = [];
+    for (var i = 0; i < n; i++) { var dow = i % 7; var b = 42 + [0, -3, -2, 1, 6, 12, 9][dow] + i * 0.25; base.push(b); act.push(b + (R() - 0.5) * 16) }
+    var X = function (i) { return 34 + i * (476 / (n - 1)) }, Y = function (v) { return 186 - (v - 20) * 2.6 };
+    [30, 45, 60, 75].forEach(function (v) { el("line", { x1: 34, x2: 510, y1: Y(v), y2: Y(v), stroke: line, "stroke-width": 1 }, s); txt(s, 28, Y(v) + 3, v, "end") });
+    var up = "", dn = "", fc = "", ac = "";
+    for (i = 0; i < n; i++) { up += (i ? "L" : "M") + X(i) + " " + Y(base[i] + 9); fc += (i ? "L" : "M") + X(i) + " " + Y(base[i]); ac += (i ? "L" : "M") + X(i) + " " + Y(act[i]) }
+    for (i = n - 1; i >= 0; i--) dn += "L" + X(i) + " " + Y(base[i] - 2);
+    el("path", { d: up + dn + "Z", fill: leafSoft, stroke: "none" }, s);
+    el("path", { d: fc, fill: "none", stroke: leaf, "stroke-width": 2.2 }, s);
+    el("path", { d: ac, fill: "none", stroke: ink, "stroke-width": 1.4, "stroke-dasharray": "3 3" }, s);
+    el("circle", { cx: X(n - 1), cy: Y(act[n - 1]), r: 4, fill: ink }, s);
+    ["W1", "W2", "W3", "W4"].forEach(function (w, k) { txt(s, X(k * 7 + 3), 204, w, "middle") });
+
+    /* days of cover before/after */
+    s = document.getElementById("c-cover"); s.innerHTML = "";
+    var before = [0.6, 4.8, 1.2, 7.5, 0.9, 2.1, 6.2, 1.5, 0.7, 3.9, 1.1, 5.4], after = [2.4, 3.1, 2.6, 3.3, 2.5, 2.8, 3.2, 2.7, 2.4, 3.0, 2.6, 3.1];
+    var bw = 476 / before.length;
+    el("line", { x1: 34, x2: 510, y1: 100, y2: 100, stroke: line }, s);
+    [0, 4, 8].forEach(function (v) { txt(s, 28, 100 - v * 10 + 3, v + "d", "end") });
+    before.forEach(function (v, k) {
+      var x = 34 + k * bw;
+      el("rect", { x: x + 4, y: 100 - v * 10, width: bw / 2 - 5, height: v * 10, fill: line }, s);
+      el("rect", { x: x + bw / 2, y: 100 - after[k] * 10, width: bw / 2 - 5, height: after[k] * 10, fill: leaf }, s);
+    });
+    txt(s, 34, 115, "grey = share by order size · green = equalised by sales velocity", "start");
+
+    /* order heatmap */
+    s = document.getElementById("c-plan"); s.innerHTML = "";
+    var sup = ["Bakery A", "Deli B", "Salads C", "Meat D", "Sushi E", "Dairy F", "Snacks G"];
+    var days = ["M", "T", "W", "T", "F", "S", "S", "M", "T", "W", "T", "F", "S", "S"];
+    R = rnd(21);
+    var cw = 400 / 14, ch = 26;
+    days.forEach(function (d, j) { txt(s, 110 + j * cw + cw / 2, 14, d, "middle") });
+    sup.forEach(function (nm, i) {
+      txt(s, 102, 38 + i * ch + 4, nm, "end");
+      days.forEach(function (d, j) {
+        var on = (i + j) % 3 === 0 || (j % 7 === 4 && i % 2 === 0) || (j % 7 === 0 && i < 4);
+        var v = on ? 0.35 + R() * 0.65 : 0;
+        var holiday = j >= 7;
+        el("rect", { x: 110 + j * cw + 1.5, y: 24 + i * ch + 1.5, width: cw - 3, height: ch - 3, rx: 3, fill: v ? leaf : paper, "fill-opacity": v ? v : 1, stroke: holiday && !v ? line : "none" }, s);
+      });
+    });
+    el("rect", { x: 110 + 7 * cw, y: 20, width: 7 * cw, height: sup.length * ch + 8, fill: "none", stroke: apricot, "stroke-width": 1.5, "stroke-dasharray": "4 3", rx: 4 }, s);
+    txt(s, 110 + 10.5 * cw, 224, "school holiday week", "middle").setAttribute("fill", apricot);
+
+    /* holiday index */
+    s = document.getElementById("c-holiday"); s.innerHTML = "";
+    var hol = [["Autumn", -4], ["Winter", -45], ["Easter", -33], ["Summer", -16]];
+    var zero = 210;
+    el("line", { x1: zero, x2: zero, y1: 6, y2: 132, stroke: muted }, s);
+    hol.forEach(function (h, k) {
+      var y = 14 + k * 30, w = Math.abs(h[1]) * 4;
+      txt(s, 120, y + 13, h[0], "end");
+      el("rect", { x: zero - w, y: y, width: w, height: 18, rx: 3, fill: h[1] > -10 ? leaf : apricot }, s);
+      txt(s, zero + 8, y + 13, (h[1] > 0 ? "+" : "") + h[1] + "%", "start");
+    });
+    txt(s, 300, 146, "fresh units sold vs the same weekdays around the break", "middle");
+
+    /* weeks stacked */
+    s = document.getElementById("c-weeks"); s.innerHTML = "";
+    var wk = [[70, 6, 0], [104, 11, 1], [126, 12, 2], [131, 9, 2]];
+    var labels = ["up to 4th", "up to 11th", "up to 18th", "up to 25th"];
+    [0, 50, 100, 150].forEach(function (v) { el("line", { x1: 40, x2: 510, y1: 150 - v * 0.9, y2: 150 - v * 0.9, stroke: line }, s); txt(s, 34, 153 - v * 0.9, v, "end") });
+    wk.forEach(function (w, k) {
+      var x = 60 + k * 115, y = 150;
+      [[w[0], slate], [w[1], apricot], [w[2], leaf]].forEach(function (p) { var h = p[0] * 0.9; el("rect", { x: x, y: y - h, width: 70, height: h, fill: p[1] }, s); y -= h });
+      txt(s, x + 35, y - 6, w[0] + w[1] + w[2], "middle").setAttribute("fill", ink);
+      txt(s, x + 35, 165, labels[k], "middle");
+    });
+
+    /* categories */
+    s = document.getElementById("c-cats"); s.innerHTML = "";
+    var cats = [["Bakery", 33, 3], ["Ambient", 31, -20], ["Chilled", 28, -8], ["Fruit & veg", 7, -21]];
+    cats.forEach(function (c, k) {
+      var y = 8 + k * 29;
+      txt(s, 96, y + 13, c[0], "end");
+      el("rect", { x: 104, y: y, width: 300, height: 18, rx: 3, fill: paper }, s);
+      el("rect", { x: 104, y: y, width: c[1] * 9, height: 18, rx: 3, fill: slate }, s);
+      txt(s, 104 + c[1] * 9 + 6, y + 13, c[1] + "%", "start").setAttribute("fill", ink);
+      txt(s, 512, y + 13, (c[2] > 0 ? "▲ " : "▼ ") + Math.abs(c[2]) + "% wk", "end").setAttribute("fill", c[2] > 0 ? apricot : leaf);
+    });
+
+    /* store gap per product */
+    s = document.getElementById("c-gap"); s.innerHTML = "";
+    var gap = [["Croissant", 42, 148], ["Sandwich", 55, 131], ["Salad bowl", 30, 170], ["Wrap", 61, 122], ["Sushi box", 25, 190], ["Yogurt cup", 48, 140]];
+    var GX = function (v) { return 110 + v * 1.9 };
+    el("line", { x1: GX(100), x2: GX(100), y1: 6, y2: 178, stroke: muted, "stroke-dasharray": "3 3" }, s);
+    txt(s, GX(100), 194, "network = 100", "middle");
+    gap.forEach(function (g, k) {
+      var y = 18 + k * 28;
+      txt(s, 100, y + 4, g[0], "end");
+      el("line", { x1: GX(g[1]), x2: GX(g[2]), y1: y, y2: y, stroke: line, "stroke-width": 4, "stroke-linecap": "round" }, s);
+      el("circle", { cx: GX(g[1]), cy: y, r: 5.5, fill: apricot }, s);
+      el("circle", { cx: GX(g[2]), cy: y, r: 5.5, fill: leaf }, s);
+      txt(s, 512, y + 4, "×" + (g[2] / g[1]).toFixed(1), "end").setAttribute("fill", ink);
+    });
+
+    /* signals */
+    s = document.getElementById("c-signals"); s.innerHTML = "";
+    var sig = [["Dead shelf", 186], ["Waste > sales", 73], ["N-times gap", 58], ["Sells but missing", 41], ["Format effect", 22]];
+    sig.forEach(function (g, k) {
+      var y = 6 + k * 28, w = g[1] * 1.7;
+      txt(s, 120, y + 13, g[0], "end");
+      el("rect", { x: 128, y: y, width: w, height: 18, rx: 3, fill: g[0] === "Sells but missing" ? leaf : slate }, s);
+      txt(s, 128 + w + 6, y + 13, g[1], "start").setAttribute("fill", ink);
+    });
+
+    /* sparks */
+    var sp = [], RS = rnd(5);
+    for (var q = 0; q < 12; q++) { var a = [], v0 = 2 + RS() * 6, dir = q % 3 === 1 ? -0.5 : 0.5; for (var j = 0; j < 10; j++) { v0 = Math.max(1, Math.min(10, v0 + dir + (RS() - 0.5) * 2)); a.push(v0) } sp.push(a) }
+    sp.forEach(function (arr, k) {
+      var g = document.getElementById("s" + (k + 1)); g.innerHTML = "";
+      var px = function (i) { return 4 + i * (192 / (arr.length - 1)) }, py = function (v) { return 42 - v * 3.8 };
+      var d = arr.map(function (v, i) { return (i ? "L" : "M") + px(i) + " " + py(v) }).join("");
+      el("path", { d: d + "L" + px(arr.length - 1) + " 44L4 44Z", fill: k % 2 ? css("--apricot-soft") : leafSoft }, g);
+      el("path", { d: d, fill: "none", stroke: k % 2 ? apricot : leaf, "stroke-width": 2 }, g);
+      el("circle", { cx: px(arr.length - 1), cy: py(arr[arr.length - 1]), r: 3.2, fill: k % 2 ? apricot : leaf }, g);
+    });
+  }
+  draw();
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw) } catch (e) {}
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+</body>
+</html>

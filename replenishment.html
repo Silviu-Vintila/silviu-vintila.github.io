@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forecast &amp; Replenishment · Silviu Vintilă</title>
+<meta name="description" content="Case study: a daily Python engine that decides how many units of fresh food each of 300+ stores receives, with stock rebuilt from delivery lots, anti-waste caps and fair sharing of scarce supplier stock.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+<div class="top"><div class="wrap"><a href="index.html">← Silviu Vintilă · Portfolio</a><span><a href="index.html#work">Case 01 of 06</a></span></div></div>
+<header class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Case study 01 · Forecast &amp; Replenishment</span>
+    <h1>A daily push engine that thinks before it ships</h1>
+    <p class="lead">Every weekday the engine decides how many units of each fresh product go to each store: one number per store × product, and every number can be traced back, column by column, to the rule that produced it.</p>
+    <div class="facts">
+      <div><span>Scale</span><b>300+ stores × ~140 SKUs</b></div>
+      <div><span>Cadence</span><b>Every order day</b></div>
+      <div><span>Replaced</span><b>Excel / VBA master</b></div>
+      <div><span>Stack</span><b>Python · SQL Server · Excel</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">The problem</span>
+      <h2>Short shelf life punishes every wrong unit</h2>
+      <p>Fresh food was allocated by a large Excel workbook with VBA macros. It was slow, it broke when someone moved a column, and nobody could explain why a store received 3 units or 30.</p>
+      <p>With a shelf life of a few days, a unit too many is waste and a unit too few is an empty shelf. Imported products came in a fixed supplier quantity that had to be shared out fairly, every single day.</p>
+    </div>
+    <div>
+      <span class="eyebrow">My role</span>
+      <h2>Rules, code, tests, rollout</h2>
+      <p>I mapped every rule from the workbook and from the people who ran it, rebuilt them as separate Python engines, matched the old output row for row, and only then changed behaviour on purpose, one documented decision at a time.</p>
+      <p>I also wrote the operating guide, the daily run script and the checks that stop the run when the input data is stale.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">The pipeline</span>
+    <h2>Twelve steps, each one a small engine</h2>
+    <ol class="flow">
+      <li class="gate"><b>Freshness gate</b><span>Stops the run if sales or delivery data are missing a working day or look partial.</span></li>
+      <li><b>Range</b><span>Only store × product pairs that are officially in the range; one editable sheet is the source of truth.</span></li>
+      <li><b>Calendar &amp; cover</b><span>Which days today's delivery must last: Thursday covers the weekend, Friday covers Monday.</span></li>
+      <li><b>Forecast</b><span>Demand per weekday from 4 weeks of history, plus a safety buffer by store tier. ML forecast plugged in with a fallback.</span></li>
+      <li><b>New stores &amp; launches</b><span>Borrow from neighbours within 1.5 km, from similar products, or from the network average.</span></li>
+      <li><b>Stock from lots</b><span>Shelf stock rebuilt from delivery lots with expiry dates, sales consumed first-in first-out.</span></li>
+      <li><b>Order</b><span>Order = forecast − stock, never below zero.</span></li>
+      <li><b>Sell-through</b><span>Last 7 days: sold most of what was sent → a bit more; sold little → trim the buffer only.</span></li>
+      <li><b>Anti-waste cap</b><span>Never send more than the store can sell before the product expires.</span></li>
+      <li><b>Supplier allocation</b><span>Short supply: cut where it hurts least. Surplus: share by days of cover, not by headcount.</span></li>
+      <li><b>Shelf presence</b><span>One unit only where the product expired on the shelf and nothing else is coming.</span></li>
+      <li class="gate"><b>Rule audit</b><span>A dozen business rules checked on the final output before the file goes out.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">Key rules, in plain words</span>
+    <h2>The formulas behind one number</h2>
+    <div class="cards">
+      <div class="card"><span class="k">Forecast</span><h3>Weekday demand plus a tiered buffer</h3>
+        <div class="formula">FORECAST = Σ avg(same weekday, 4 wks) + Z × √Σ var<br>Z: top stores 1.92 · middle 1.64 · low 1.28</div>
+        <p>Variances are summed, not standard deviations, so a 3-day cover does not inflate the buffer by 70%. That bug existed in the original and was fixed with a before/after test.</p></div>
+      <div class="card"><span class="k">Stock</span><h3>What is really on the shelf</h3>
+        <div class="formula">STOCK = delivered (21 d) − sold − expired lots<br>expired = lots past date, not covered by sales</div>
+        <p>The system stock counts expired goods still on the books. Rebuilding stock from lots tells the engine what can actually be sold tomorrow.</p></div>
+      <div class="card"><span class="k">Anti-waste</span><h3>Sellable before expiry</h3>
+        <div class="formula">stock + order ≤ ⌈daily sales × shelf-life days⌉</div>
+        <p>Shelf life comes from real delivery and expiry dates (median of the last 3 deliveries), not from master data, which was wrong for most products.</p></div>
+      <div class="card"><span class="k">Fair sharing</span><h3>Surplus by days of cover</h3>
+        <div class="formula">next unit → store with the fewest days of cover<br>cap: stock + sent ≤ 1.5 × sellable</div>
+        <p>Sharing surplus one unit per store sent goods to stores that don't sell them. Equalising days of cover cut the worst case from weeks of stock to days.</p></div>
+      <div class="card"><span class="k">New stores</span><h3>Neighbours first, then a cap</h3>
+        <div class="formula">forecast = max(own sales, neighbours ≤ 1.5 km × 1.3)<br>after 7 days: ≤ real sales × cover × 1.5</div>
+        <p>Borrowed numbers never carry the neighbour's buffer. Once a new store has a week of real sales, those sales cap what it receives.</p></div>
+      <div class="card"><span class="k">Long-life sibling</span><h3>Ambient push</h3>
+        <div class="formula">need = daily sales × min(days to expiry, target) − stock<br>best sellers first · shelf-space cap · never above stock</div>
+        <p>A separate engine for long-life goods: one fixed quantity from the warehouse, shared where it is needed, starting with the strongest stores.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">What the team sees</span>
+    <h2>Every quantity explained, step by step</h2>
+    <div class="dashes">
+      <div class="dash wide">
+        <div class="dash-top"><span class="dash-title">One store × product · how 9 units became 6</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-cascade" viewBox="0 0 960 250" role="img" aria-label="Waterfall from forecast to final quantity"></svg>
+        <p class="note">The output file keeps every step as its own column, so a question about a store is answered by reading one row.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Surplus sharing · days of cover per store</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-share" viewBox="0 0 520 220" role="img" aria-label="Days of cover per store under two sharing rules"></svg>
+        <div class="legend"><span><i style="background: var(--line)"></i>One unit each</span><span><i style="background: var(--leaf)"></i>Equal days of cover</span></div>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Rebuilt stock vs system stock</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-stock" viewBox="0 0 520 220" role="img" aria-label="Distribution of differences between rebuilt and system stock"></svg>
+        <p class="note">Differences per store × product, in units. Most rows within ±2; the tail is expired stock still on the books.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">How I know it works</span>
+      <h2>Proof before every change</h2>
+      <ul class="checks">
+        <li><b>Row-for-row match with the old master</b> on tens of thousands of rows before any deliberate change.</li>
+        <li><b>Regression snapshots for each weekday:</b> real SQL inputs recorded once, replayed offline after every code change.</li>
+        <li><b>Rule audit on every run:</b> whole units only, nothing outside the range, never above supplier stock, anti-waste respected.</li>
+        <li><b>Stock accuracy tracked daily</b> against the system: mean error and bias printed on every run.</li>
+        <li><b>ML backtest</b> day by day, using only the forecast that existed each morning, before switching it on.</li>
+      </ul>
+    </div>
+    <div>
+      <span class="eyebrow">Decisions worth telling</span>
+      <h2>Small rules, big effects</h2>
+      <div class="log">
+        <div><b>"First sale" was wrong</b><p>Launch dates counted only direct sales, so products sold mostly in meal deals looked brand new and got their average divided by too few days. Counting any sale fixed it.</p></div>
+        <div><b>Master data lied</b><p>Shelf life in the item master was longer than reality for most products. The engine now reads it from actual delivery and expiry dates.</p></div>
+        <div><b>Non-determinism</b><p>The regression test caught an average changing at the second decimal between runs: a set iterated in random order. Every list behind an average is now sorted.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap">
+    <div class="outcome"><p><b>Outcome.</b> One run each order day, one file with the store × product matrix and a full audit sheet behind it. Questions from stores are answered from a single row, and every rule change ships with a before/after comparison.</p></div>
+    <div class="tags"><span class="tag">pandas</span><span class="tag">SQL Server</span><span class="tag">MSAL / MFA</span><span class="tag">xlsxwriter</span><span class="tag">regression replay</span><span class="tag">git</span></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap pager">
+    <a href="index.html"><span>← Back</span><b>Portfolio overview</b></a>
+    <a class="next" href="ordering.html"><span>Next case →</span><b>02 · Supplier orders</b></a>
+  </div>
+</section>
+<footer class="band foot"><div class="wrap">Company, people and figures are anonymized; every chart on this page uses illustrative data. © 2026 Silviu Vintilă · <a href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/">LinkedIn</a></div></footer>
+
+<script src="case.js"></script>
+<script>
+Case.charts(function (c, h) {
+  /* waterfall */
+  var s = h.svg("c-cascade");
+  var steps = [["Forecast", 9, "t"], ["Stock on shelf", -4], ["Sell-through", +1], ["Anti-waste cap", -2], ["Supplier surplus", +2], ["Final", 6, "t"]];
+  var X0 = 70, bw = 120, gap = 28, Y = function (v) { return 210 - v * 18 }, run = 0;
+  [0, 4, 8].forEach(function (v) { h.el("line", { x1: 40, x2: 950, y1: Y(v), y2: Y(v), stroke: c.line }, s); h.txt(s, 34, Y(v) + 4, v, "end") });
+  steps.forEach(function (st, k) {
+    var x = X0 + k * (bw + gap), top, bot, col;
+    if (st[2]) { top = st[1]; bot = 0; run = st[1]; col = k ? c.leaf : c.slate }
+    else { var nr = run + st[1]; top = Math.max(run, nr); bot = Math.min(run, nr); col = st[1] < 0 ? c.apricot : c.leaf; run = nr }
+    h.el("rect", { x: x, y: Y(top), width: bw, height: Math.max(2, (top - bot) * 18), rx: 4, fill: col }, s);
+    h.txt(s, x + bw / 2, Y(top) - 8, st[2] ? st[1] : (st[1] > 0 ? "+" : "−") + Math.abs(st[1]), "middle", c.ink);
+    h.txt(s, x + bw / 2, 232, st[0], "middle");
+    if (k < steps.length - 1) h.el("line", { x1: x + bw, x2: x + bw + gap, y1: Y(run), y2: Y(run), stroke: c.muted, "stroke-dasharray": "3 3" }, s);
+  });
+
+  /* surplus sharing */
+  s = h.svg("c-share");
+  var before = [0.8, 6.5, 1.1, 9.2, 0.6, 2.4, 7.8, 1.3, 0.9, 4.1], after = [2.6, 3.1, 2.7, 3.4, 2.5, 2.8, 3.3, 2.7, 2.6, 3.0];
+  var bw2 = 470 / before.length, YY = function (v) { return 190 - v * 18 };
+  [0, 4, 8].forEach(function (v) { h.el("line", { x1: 36, x2: 510, y1: YY(v), y2: YY(v), stroke: c.line }, s); h.txt(s, 30, YY(v) + 4, v + "d", "end") });
+  before.forEach(function (v, k) {
+    var x = 40 + k * bw2;
+    h.el("rect", { x: x + 3, y: YY(v), width: bw2 / 2 - 4, height: v * 18, fill: c.line }, s);
+    h.el("rect", { x: x + bw2 / 2, y: YY(after[k]), width: bw2 / 2 - 4, height: after[k] * 18, fill: c.leaf }, s);
+    h.txt(s, x + bw2 / 2, 206, "S" + (k + 1), "middle");
+  });
+
+  /* stock difference histogram */
+  s = h.svg("c-stock");
+  var bins = [-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6], vals = [2, 3, 5, 8, 14, 22, 31, 18, 9, 5, 3, 2, 1];
+  var bw3 = 470 / bins.length;
+  bins.forEach(function (b, k) {
+    var x = 40 + k * bw3, hh = vals[k] * 5.2;
+    h.el("rect", { x: x + 2, y: 190 - hh, width: bw3 - 4, height: hh, rx: 2, fill: Math.abs(b) <= 2 ? c.leaf : c.slate }, s);
+    h.txt(s, x + bw3 / 2, 206, (b > 0 ? "+" : "") + b, "middle");
+  });
+  h.el("line", { x1: 36, x2: 510, y1: 190, y2: 190, stroke: c.muted }, s);
+});
+</script>
+</body>
+</html>

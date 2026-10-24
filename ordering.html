@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Supplier Orders · Silviu Vintilă</title>
+<meta name="description" content="Case study: daily supplier order proposals that follow each supplier's calendar, learn from past school holidays and plan for stores that have not opened yet.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+<div class="top"><div class="wrap"><a href="index.html">← Silviu Vintilă · Portfolio</a><span><a href="index.html#work">Case 02 of 06</a></span></div></div>
+<header class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Case study 02 · Supplier Orders</span>
+    <h1>Order proposals that follow the supplier calendar</h1>
+    <p class="lead">Each morning: what to order from every supplier today, the plan for the next two weeks, and the store-by-store breakdown behind every line, including holidays that haven't started and stores that haven't opened.</p>
+    <div class="facts">
+      <div><span>Suppliers</span><b>Fresh, each with its own calendar</b></div>
+      <div><span>Horizon</span><b>Rolling 14 days</b></div>
+      <div><span>Inputs</span><b>Sales · calendar · holidays · openings</b></div>
+      <div><span>Hand-over</span><b>Manual + 13-slide deck</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">The problem</span>
+      <h2>Buyers were guessing a week ahead</h2>
+      <p>Every supplier has its own order days, delivery days and number of days each delivery must last. Buyers estimated quantities by hand, with no view of next week's school holiday or of the five stores opening on Thursday.</p>
+      <p>Too little meant empty shelves for days; too much meant short-life stock that nobody could sell.</p>
+    </div>
+    <div>
+      <span class="eyebrow">My role</span>
+      <h2>Calendar logic, forecast, analysis, training</h2>
+      <p>I designed the calendar reader with the planning team, built the forecast and the holiday analysis behind it, and wrote the manual and slide deck the buyers use.</p>
+      <p>The proposal reuses the same demand logic as the daily store engine, so the two never disagree about what a store sells.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">How a proposal is built</span>
+    <h2>From calendar to case size</h2>
+    <ol class="flow">
+      <li><b>Read the calendar</b><span>Order day → store delivery day → number of days covered, per supplier.</span></li>
+      <li class="gate"><b>Check coverage</b><span>Each supplier's deliveries must cover the week exactly once: no gaps, no double days.</span></li>
+      <li><b>Daily demand</b><span>Same-weekday average over 4 weeks, zeros included, per store and product.</span></li>
+      <li><b>Store trend</b><span>Last 14 days vs the 14 before, bounded so one odd week can't swing the order.</span></li>
+      <li><b>Holiday factor</b><span>Learned per store and category from the most recent comparable holiday.</span></li>
+      <li><b>New openings</b><span>From the opening date: neighbours within 1.5 km, or the network average.</span></li>
+      <li><b>Sum over cover</b><span>Store demand × days covered by the delivery, plus a small agreed margin.</span></li>
+      <li><b>Round to MOQ</b><span>Supplier minimum or case multiple; zero stays zero.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">What the buyer sees</span>
+    <h2>Today's orders and the two weeks behind them</h2>
+    <div class="dashes">
+      <div class="dash wide">
+        <div class="dash-top"><span class="dash-title">Delivery calendar · which days each delivery covers</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-cal" viewBox="0 0 960 230" role="img" aria-label="Weekly coverage of deliveries per supplier"></svg>
+        <p class="note">Each bar is one delivery and the days it must last. The check fails if any day is uncovered or covered twice.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Holiday effect on fresh sales · by category</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-hol" viewBox="0 0 520 210" role="img" aria-label="Sales index during the holiday by category"></svg>
+        <p class="note">Index = sold ÷ expected from the same weekdays two weeks before and after.</p>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Proposal vs actual sales · next 14 days</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-plan" viewBox="0 0 520 210" role="img" aria-label="Daily proposed quantity versus sales"></svg>
+        <div class="legend"><span><i style="background: var(--leaf)"></i>Proposed</span><span><i style="background: var(--ink)"></i>Sold</span><span><i style="background: var(--apricot-soft); border: 1px solid var(--apricot)"></i>Holiday</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">The holiday analysis</span>
+      <h2>Learning from every past break</h2>
+      <p>A separate script indexes sales for every past school holiday against the same weekdays around it, per store and per category, and writes the factors the forecast uses.</p>
+      <ul class="checks">
+        <li>Stores that opened after the last holiday borrow the factors of neighbours within 1.5 km, category by category.</li>
+        <li>No neighbours: the category index for the whole network, not one flat number.</li>
+        <li>Winter and Easter breaks hit fresh sales hard; autumn barely moves them. The order now knows that in advance.</li>
+      </ul>
+    </div>
+    <div>
+      <span class="eyebrow">Decisions worth telling</span>
+      <h2>When the data tells a different story</h2>
+      <div class="log">
+        <div><b>An old holiday was really a launch</b><p>One past autumn break coincided with a new ready-meal range going into stores. Its "holiday effect" was a launch effect. Factors now come from the most recent comparable holiday only.</p></div>
+        <div><b>Stock at delivery was a guess</b><p>Subtracting projected stock depended on orders already placed, which were themselves estimates. The team chose a demand-plus-margin proposal and keeps projected stock as information.</p></div>
+        <div><b>Range comes from one sheet</b><p>New stores get only the products assigned to them, and stores missing from the range sheet are flagged instead of silently receiving a guess.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="outcome"><p><b>Outcome.</b> One workbook each morning: summary with warnings, today's orders, the 14-day plan, the daily forecast per product, new stores and the per-store detail. Shipped with a manual and a slide deck so the buying team owns it.</p></div>
+    <div class="tags"><span class="tag">pandas</span><span class="tag">seasonality</span><span class="tag">geo matching</span><span class="tag">calendar logic</span><span class="tag">python-pptx</span></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap pager">
+    <a href="replenishment.html"><span>← Previous case</span><b>01 · Forecast &amp; replenishment</b></a>
+    <a class="next" href="billing.html"><span>Next case →</span><b>03 · Partner loss billing</b></a>
+  </div>
+</section>
+<footer class="band foot"><div class="wrap">Company, people and figures are anonymized; every chart on this page uses illustrative data. © 2026 Silviu Vintilă · <a href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/">LinkedIn</a></div></footer>
+
+<script src="case.js"></script>
+<script>
+Case.charts(function (c, h) {
+  /* calendar coverage */
+  var s = h.svg("c-cal");
+  var days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var sup = [["Bakery A", [[0, 2], [2, 2], [4, 3]]], ["Deli B", [[0, 1], [1, 3], [4, 3]]], ["Salads C", [[0, 1], [1, 1], [2, 1], [3, 1], [4, 3]]], ["Meat D", [[0, 1], [1, 2], [3, 1], [4, 3]]], ["Sushi E", [[0, 2], [2, 2], [4, 3]]], ["Snacks F", [[0, 7]]]];
+  var X = function (d) { return 120 + d * 118 }, ch = 30;
+  days.forEach(function (d, j) { h.txt(s, X(j) + 59, 16, d, "middle"); h.el("line", { x1: X(j), x2: X(j), y1: 22, y2: 214, stroke: c.line }, s) });
+  h.el("line", { x1: X(7), x2: X(7), y1: 22, y2: 214, stroke: c.line }, s);
+  sup.forEach(function (r, i) {
+    var y = 28 + i * ch;
+    h.txt(s, 110, y + 17, r[0], "end");
+    r[1].forEach(function (d, k) {
+      h.el("rect", { x: X(d[0]) + 3, y: y + 3, width: d[1] * 118 - 6, height: ch - 8, rx: 5, fill: k % 2 ? c.leaf : c.slate, "fill-opacity": 0.85 }, s);
+      h.txt(s, X(d[0]) + 12, y + 18, "+" + d[1] + "d", "start", c.card);
+    });
+  });
+
+  /* holiday index */
+  h.hbars("c-hol", [["Sandwiches", -18, c.apricot], ["Salads", -12, c.apricot], ["Ready meals", 8, c.leaf], ["Soups", -2, c.slate], ["Snacks", -6, c.apricot], ["Desserts", 3, c.leaf]], { labelW: 120, max: 20, fmt: function (v) { return (v > 0 ? "+" : "") + v + "%" } });
+
+  /* plan vs sales */
+  s = h.svg("c-plan");
+  var R = h.rnd(11), n = 14, plan = [], sold = [];
+  for (var i = 0; i < n; i++) { var base = 60 + [8, 0, 2, 6, 14, 10, -4][i % 7]; var hol = i >= 8 ? 0.82 : 1; plan.push(base * hol * 1.1); sold.push(base * hol + (R() - 0.5) * 10) }
+  var PX = function (i) { return 40 + i * (470 / (n - 1)) }, PY = function (v) { return 180 - (v - 30) * 2.4 };
+  h.el("rect", { x: PX(8) - 10, y: 10, width: PX(13) - PX(8) + 20, height: 172, fill: c.apricotSoft }, s);
+  [40, 60, 80].forEach(function (v) { h.el("line", { x1: 36, x2: 510, y1: PY(v), y2: PY(v), stroke: c.line }, s); h.txt(s, 30, PY(v) + 4, v, "end") });
+  var dp = "", ds = "";
+  for (i = 0; i < n; i++) { dp += (i ? "L" : "M") + PX(i) + " " + PY(plan[i]); ds += (i ? "L" : "M") + PX(i) + " " + PY(sold[i]) }
+  h.el("path", { d: dp, fill: "none", stroke: c.leaf, "stroke-width": 2.4 }, s);
+  h.el("path", { d: ds, fill: "none", stroke: c.ink, "stroke-width": 1.4, "stroke-dasharray": "3 3" }, s);
+  h.txt(s, PX(10.5), 200, "holiday", "middle", c.apricot);
+  h.txt(s, PX(3.5), 200, "normal weeks", "middle");
+});
+</script>
+</body>
+</html>

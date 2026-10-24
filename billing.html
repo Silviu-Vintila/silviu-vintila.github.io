@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Partner Loss Billing · Silviu Vintilă</title>
+<meta name="description" content="Case study: monthly partner loss billing with a day-by-day allowance engine, layered manual overrides and per-store explanations generated for every dispute.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="case.css">
+</head>
+<body>
+<div class="top"><div class="wrap"><a href="index.html">← Silviu Vintilă · Portfolio</a><span><a href="index.html#work">Case 03 of 06</a></span></div></div>
+<header class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Case study 03 · Partner Losses &amp; Billing</span>
+    <h1>Monthly billing with rules nobody has to re-explain</h1>
+    <p class="lead">Franchise partners pay for losses above an allowance that changes with store age, operator changes and region, day by day. The engine computes it for every store and writes a plain-language explanation for every partner who asks.</p>
+    <div class="facts">
+      <div><span>Scope</span><b>300+ partner stores</b></div>
+      <div><span>Cadence</span><b>Monthly + weekly review</b></div>
+      <div><span>Output</span><b>Finance report + per-store dashboards</b></div>
+      <div><span>Stack</span><b>Python · SQL · openpyxl</b></div>
+    </div>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">The problem</span>
+      <h2>Rules that lived in people's heads</h2>
+      <p>The allowance schedule, a regional exception, board-approved special ceilings and one-off corrections were applied by hand in spreadsheets. Mistakes were hard to trace, and every partner complaint meant hours of digging.</p>
+      <p>Stores that changed operator mid-month had to be split correctly between the outgoing and incoming partner.</p>
+    </div>
+    <div>
+      <span class="eyebrow">What partners pay</span>
+      <h2>One formula, many moving parts</h2>
+      <div class="formula">CHARGE = max(0, billable losses − ALLOWANCE) + alcohol + tobacco</div>
+      <p>Billable losses are expired and damaged goods in four fresh and ambient categories. Alcohol and tobacco are charged in full and never touch the allowance. Frozen and some internal categories are shown but never charged.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">The allowance engine</span>
+    <h2>Computed for every single day</h2>
+    <div class="cards three">
+      <div class="card"><span class="k">Chained months</span><h3>Month boundaries move</h3><p>Month 1 runs from the operator's start date; each next month starts the day after the previous one ended. End-of-month dates are clamped (31 Jan + 1 month = 28/29 Feb).</p></div>
+      <div class="card"><span class="k">Tiers</span><h3>Grace, then step down</h3><p>Taken-over stores: unlimited in month 1, then two lower tiers, then a permanent floor. New stores keep a longer grace. Two regions have their own schedule.</p></div>
+      <div class="card"><span class="k">Daily sum</span><h3>Allowance = Σ tier ÷ days in month</h3><p>Only over the numeric days in the billing window. Losses on grace days are fully exempt and never use up the allowance of other days.</p></div>
+    </div>
+    <div class="dash" style="margin-top: 18px">
+      <div class="dash-top"><span class="dash-title">One taken-over store · allowance per day across four months</span><span class="demo">Illustrative data</span></div>
+      <svg class="chart" id="c-tier" viewBox="0 0 960 240" role="img" aria-label="Daily allowance tiers with the billing month highlighted"></svg>
+      <p class="note">Operator started on the 10th. In the highlighted billing month: days 1–10 are grace (exempt), days 11–30 sit in tier 2, so the allowance is 20 days × tier ÷ 30.</p>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap two">
+    <div>
+      <span class="eyebrow">Manual corrections, without touching code</span>
+      <h2>One editable file, three layers</h2>
+      <ul class="checks">
+        <li><b>Exclusions:</b> a wrong transaction is set to zero but stays visible in the report.</li>
+        <li><b>Supplementary allowance:</b> a fixed amount added on top, only when the allowance is numeric.</li>
+        <li><b>Preferential allowance:</b> a board decision that replaces the schedule entirely.</li>
+        <li><b>Special windows:</b> fix a billing window without editing the HR export, which is regenerated every month.</li>
+        <li>Every correction can be pinned to one operator's row with a composite key, so a handover month never applies it to the wrong partner.</li>
+      </ul>
+    </div>
+    <div>
+      <span class="eyebrow">Guards</span>
+      <h2>Refuse bad input, loudly</h2>
+      <ul class="checks">
+        <li>Lines with impossible quantities or values (a barcode typed as quantity) are removed and listed.</li>
+        <li>If several input files match, the most recent one is used and named in the console.</li>
+        <li>The billing month is taken from the data's own dates when the label disagrees, after an export once shifted every store into the next month.</li>
+        <li>Template files and sheets from the wrong year are ignored.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <span class="eyebrow">For the Monday meeting</span>
+    <h2>Weekly evolution and per-store answers</h2>
+    <div class="dashes">
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Stores over the allowance · by week and cluster</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-weeks" viewBox="0 0 520 210" role="img" aria-label="Stores over the allowance by week and cluster"></svg>
+        <div class="legend"><span><i style="background: var(--slate)"></i>Mature</span><span><i style="background: var(--apricot)"></i>Changed operator</span><span><i style="background: var(--leaf)"></i>New store</span></div>
+      </div>
+      <div class="dash">
+        <div class="dash-top"><span class="dash-title">Loss as % of sales · by cluster</span><span class="demo">Illustrative data</span></div>
+        <svg class="chart" id="c-pct" viewBox="0 0 520 210" role="img" aria-label="Loss as share of sales by cluster"></svg>
+        <p class="note">All losses, losses to charge, and the known charge after the allowance. A purchase-price version of the same summary goes to management.</p>
+      </div>
+    </div>
+    <div class="cards three" style="margin-top: 18px">
+      <div class="card"><span class="k">Per-store dashboard</span><h3>Generated for every complaint</h3><p>Day-by-day tier breakdown, losses by category and product, and what was charged, rebuilt automatically each time the report runs.</p></div>
+      <div class="card"><span class="k">Self-check</span><h3>Never a misleading breakdown</h3><p>If a manual override makes the applied allowance differ from the schedule, the dashboard says "special allowance" instead of showing tiers that no longer add up.</p></div>
+      <div class="card"><span class="k">Anomalies</span><h3>Flagged before billing</h3><p>Duplicated losses, single lines above a threshold and stores losing more than a tenth of their sales are listed for review every week.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="outcome"><p><b>Outcome.</b> The monthly cycle runs in minutes instead of days, from live data, with a full audit trail. Every change to the rules is checked by regenerating all reports and dashboards before and after and comparing them cell by cell.</p></div>
+    <div class="tags"><span class="tag">rule engine</span><span class="tag">openpyxl</span><span class="tag">SQL Server</span><span class="tag">financial controls</span><span class="tag">git</span></div>
+  </div>
+</section>
+
+<section class="band" style="padding-top: 0">
+  <div class="wrap pager">
+    <a href="ordering.html"><span>← Previous case</span><b>02 · Supplier orders</b></a>
+    <a class="next" href="assortment.html"><span>Next case →</span><b>04 · Assortment &amp; availability</b></a>
+  </div>
+</section>
+<footer class="band foot"><div class="wrap">Company, people and figures are anonymized; every chart on this page uses illustrative data. © 2026 Silviu Vintilă · <a href="https://www.linkedin.com/in/silviu-vintila-85a4991a0/">LinkedIn</a></div></footer>
+
+<script src="case.js"></script>
+<script>
+Case.charts(function (c, h) {
+  /* tier timeline: 4 months x 30 days; operator start on day 10 of month 0 */
+  var s = h.svg("c-tier");
+  var D = 120, X = function (d) { return 60 + d * (880 / D) }, Y = function (v) { return 200 - v * 0.024 };
+  var tier = function (d) { if (d < 10) return null; if (d < 40) return "U"; if (d < 71) return 6000; if (d < 102) return 4000; return 3100 };
+  h.el("rect", { x: X(30), y: 14, width: X(60) - X(30), height: 192, fill: c.leafSoft }, s);
+  h.txt(s, X(45), 28, "billing month", "middle", c.leaf);
+  [0, 2000, 4000, 6000].forEach(function (v) { h.el("line", { x1: 56, x2: 944, y1: Y(v), y2: Y(v), stroke: c.line }, s); h.txt(s, 50, Y(v) + 4, v ? v / 1000 + "k" : "0", "end") });
+  for (var d = 0; d < D; d++) {
+    var t = tier(d), x = X(d) + 0.5, w = 880 / D - 1;
+    if (t === null) continue;
+    if (t === "U") h.el("rect", { x: x, y: 40, width: w, height: 160, fill: c.apricotSoft }, s);
+    else h.el("rect", { x: x, y: Y(t), width: w, height: 200 - Y(t), fill: d >= 30 && d < 60 ? c.leaf : c.slate, "fill-opacity": d >= 30 && d < 60 ? 1 : 0.55 }, s);
+  }
+  h.txt(s, X(25), 56, "grace: unlimited", "middle", c.apricot);
+  ["month A", "month B", "month C", "month D"].forEach(function (m, k) { h.txt(s, X(k * 30 + 15), 224, m, "middle") });
+  h.txt(s, X(10), 216, "start", "middle", c.ink);
+
+  /* weekly stacked */
+  s = h.svg("c-weeks");
+  var wk = [[70, 6, 0], [104, 11, 1], [126, 12, 2], [131, 9, 2]], lab = ["wk 1", "wk 2", "wk 3", "wk 4"];
+  [0, 50, 100, 150].forEach(function (v) { h.el("line", { x1: 40, x2: 510, y1: 180 - v * 1.05, y2: 180 - v * 1.05, stroke: c.line }, s); h.txt(s, 34, 184 - v * 1.05, v, "end") });
+  wk.forEach(function (w, k) {
+    var x = 66 + k * 112, y = 180;
+    [[w[0], c.slate], [w[1], c.apricot], [w[2], c.leaf]].forEach(function (p) { var hh = p[0] * 1.05; h.el("rect", { x: x, y: y - hh, width: 70, height: hh, fill: p[1] }, s); y -= hh });
+    h.txt(s, x + 35, y - 6, w[0] + w[1] + w[2], "middle", c.ink);
+    h.txt(s, x + 35, 198, lab[k], "middle");
+  });
+
+  /* % of sales by cluster: grouped bars */
+  s = h.svg("c-pct");
+  var cl = [["Mature", 3.1, 2.2, 0.6], ["Changed", 4.4, 3.3, 1.4], ["New", 6.2, 4.6, 0.9]];
+  var cols = [c.line, c.slate, c.apricot];
+  [0, 2, 4, 6].forEach(function (v) { h.el("line", { x1: 40, x2: 510, y1: 180 - v * 25, y2: 180 - v * 25, stroke: c.line }, s); h.txt(s, 34, 184 - v * 25, v + "%", "end") });
+  cl.forEach(function (r, k) {
+    var x = 70 + k * 150;
+    [1, 2, 3].forEach(function (j) { var hh = r[j] * 25; h.el("rect", { x: x + (j - 1) * 36, y: 180 - hh, width: 30, height: hh, rx: 2, fill: cols[j - 1] }, s); h.txt(s, x + (j - 1) * 36 + 15, 174 - hh, r[j].toFixed(1), "middle", c.ink) });
+    h.txt(s, x + 51, 198, r[0], "middle");
+  });
+  h.txt(s, 510, 14, "all · to charge · known", "end");
+});
+</script>
+</body>
+</html>
